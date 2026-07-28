@@ -1,6 +1,6 @@
 {
-  "name": "مفتوحة \u2014 صيدليات سيدي بلعباس",
-  "short_name": "مفتوحة",
+  "name": "Pharis \u2014 صيدليات سيدي بلعباس",
+  "short_name": "Pharis",
   "description": "اعرف أي صيدلية مفتوحة الآن بالقرب منك",
   "start_url": "./index.html",
   "scope": "./",
