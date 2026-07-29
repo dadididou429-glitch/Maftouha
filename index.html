@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Pharis — صيدليات مفتوحة بالقرب منك</title>
-<meta name="description" content="اعرف أي صيدلية مفتوحة الآن بالقرب منك، في الولايات الجزائرية المدعومة" />
+<title>Pharis \u2014 صيدليات سيدي بلعباس</title>
+<meta name="description" content="اعرف أي صيدلية مفتوحة الآن بالقرب منك في سيدي بلعباس" />
 <meta name="theme-color" content="#022c22" />
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icon-192.png" />
@@ -17,159 +17,865 @@
 <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js" crossorigin></script>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDHMYoNaXnkrILKM38Q0f-bL1u72AXRbkE",
-  authDomain: "maftouha-ap.firebaseapp.com",
-  projectId: "maftouha-ap",
-  storageBucket: "maftouha-ap.firebasestorage.app",
-  messagingSenderId: "584528603494",
-  appId: "1:584528603494:web:46f17d9c9bee0cb208c0a7",
-  measurementId: "G-BNSGCRJ4X6"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+  window.addEventListener("error", function (e) {
+    var el = document.getElementById("root");
+    if (el && !el.dataset.mounted) {
+      el.innerHTML =
+        '<div style="padding:24px;font-family:sans-serif;color:#7f1d1d;background:#fef2f2;direction:rtl;text-align:right">' +
+        '<b>صار خطأ أثناء تحميل التطبيق:</b><br><br>' +
+        (e.message || "unknown error") +
+        '<br><br><span style="color:#666;font-size:13px">' + (e.filename || "") + ":" + (e.lineno || "") + '</span></div>';
+    }
+  });
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
-html, body { margin:0; padding:0; overscroll-behavior-y:none; }
-.mono { font-family:'IBM Plex Mono',monospace; }
-.pulse-dot::before { content:''; position:absolute; inset:-4px; border-radius:9999px; background:currentColor; opacity:.35; animation:pulse-ring 2s ease-out infinite; }
-@keyframes pulse-ring { 0%{transform:scale(.8);opacity:.5} 70%{transform:scale(1.8);opacity:0} 100%{transform:scale(1.8);opacity:0} }
-@keyframes slideUp { from{transform:translateY(24px);opacity:0} to{transform:translateY(0);opacity:1} }
-.sheet-anim { animation:slideUp .2s ease-out; }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
+  html, body { margin: 0; padding: 0; overscroll-behavior-y: none; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .pulse-dot::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.35;
+    animation: pulse-ring 2s ease-out infinite;
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    70% { transform: scale(1.8); opacity: 0; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+  @keyframes slideUp {
+    from { transform: translateY(24px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .sheet-anim { animation: slideUp 0.2s ease-out; }
 </style>
 </head>
-
 <body>
-<div id="root" style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:#065f46;direction:rtl">
-جاري تحميل التطبيق...
-</div>
+<div id="root" style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:#065f46;direction:rtl">جاري تحميل التطبيق...</div>
 
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useMemo } = React;
 
-const Icon = ({children,className}) => (
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+const Icon = ({ children, className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" className={className}>
+    {children}
+  </svg>
 );
-const MapPin=({className})=><Icon className={className}><path d="M12 21s-6-5.686-6-10a6 6 0 1112 0c0 4.314-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></Icon>;
-const Clock=({className})=><Icon className={className}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></Icon>;
-const Phone=({className})=><Icon className={className}><path d="M5 4h3.5l1.8 4.5-2 1.5a10.5 10.5 0 005.7 5.7l1.5-2L20 15.5V19a1.5 1.5 0 01-1.6 1.5A15.5 15.5 0 013.5 5.6 1.5 1.5 0 015 4z"/></Icon>;
-const Search=({className})=><Icon className={className}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></Icon>;
-const X=({className})=><Icon className={className}><path d="M6 6l12 12M6 18L18 6"/></Icon>;
-const Flag=({className})=><Icon className={className}><path d="M5 21V4h13l-3 4 3 4H5"/></Icon>;
-const AlertTriangle=({className})=><Icon className={className}><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v4"/><path d="M12 17h.01"/></Icon>;
-const Navigation=({className})=><Icon className={className}><path d="M3 11l18-8-8 18-2-8-8-2z"/></Icon>;
-const Heart=({className,fill})=><svg viewBox="0 0 24 24" fill={fill==="currentColor"?"currentColor":"none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 21s-7.5-4.686-10-9A5.5 5.5 0 0112 6a5.5 5.5 0 0110 6c-2.5 4.314-10 9-10 9z"/></svg>;
-const Star=({className,fill})=><svg viewBox="0 0 24 24" fill={fill==="currentColor"?"currentColor":"none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>;
+const MapPin = ({ className }) => (
+  <Icon className={className}><path d="M12 21s-6-5.686-6-10a6 6 0 1112 0c0 4.314-6 10-6 10z" /><circle cx="12" cy="11" r="2" /></Icon>
+);
+const Clock = ({ className }) => (
+  <Icon className={className}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></Icon>
+);
+const Phone = ({ className }) => (
+  <Icon className={className}><path d="M5 4h3.5l1.8 4.5-2 1.5a10.5 10.5 0 005.7 5.7l1.5-2L20 15.5V19a1.5 1.5 0 01-1.6 1.5A15.5 15.5 0 013.5 5.6 1.5 1.5 0 015 4z" /></Icon>
+);
+const Search = ({ className }) => (
+  <Icon className={className}><circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" /></Icon>
+);
+const X = ({ className }) => (
+  <Icon className={className}><path d="M6 6l12 12M6 18L18 6" /></Icon>
+);
+const Flag = ({ className }) => (
+  <Icon className={className}><path d="M5 21V4h13l-3 4 3 4H5" /></Icon>
+);
+const AlertTriangle = ({ className }) => (
+  <Icon className={className}><path d="M12 3l10 18H2L12 3z" /><path d="M12 10v4" /><path d="M12 17h.01" /></Icon>
+);
+const Navigation = ({ className }) => (
+  <Icon className={className}><path d="M3 11l18-8-8 18-2-8-8-2z" /></Icon>
+);
+const Heart = ({ className, fill }) => (
+  <svg viewBox="0 0 24 24" fill={fill === "currentColor" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 21s-7.5-4.686-10-9A5.5 5.5 0 0112 6a5.5 5.5 0 0110 6c-2.5 4.314-10 9-10 9z" />
+  </svg>
+);
+const Star = ({ className, fill }) => (
+  <svg viewBox="0 0 24 24" fill={fill === "currentColor" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+  </svg>
+);
 
-const PHARMACIES = [
-["صيدلية بوعشة فريد","شارع 08 نوفمبر","Rue 08 Novembre, Sidi Bel Abbès",null,35.1994115,-0.6453492,8,24,false],
-["صيدلية أنس بن الأزهر","سيدي جيلالي","Agence Foncière, Sidi Djilali, Sidi Bel Abbès","040 73 11 11",35.2100923,-0.6308727,0,24,true],
-["صيدلية منصور وفاء","سيدي جيلالي","250 Segar Abdelaziz, Secteur 1, Sidi Djilali",null,35.2156413,-0.6350891,8.5,24,false],
-["صيدلية بن حمودة","سيدي بلعباس","Unnamed Rd, Sidi Bel Abbès 22000","0557 48 64 80",35.2194202,-0.6259365,8,25,false],
-["صيدلية د. عربي","روڨاب عكاشة","Telmouni N°23 Lot 36, Rouggab Okkacha, Sidi Bel Abbès","0542 61 77 50",35.1736176,-0.5448622,0,24,true],
-["صيدلية بن عز الدين عبد الصمد","بوليفار بنديدة","56 Bd Bendida Mohamed, Sidi Bel Abbès 22002","0770 80 52 35",35.1950042,-0.61941,8,26.5,false],
-["صيدلية رقبال محل","سيدي بلعباس","17 Rue Laziz Ghalem, Sidi Bel Abbès","0542 69 78 07",35.1976143,-0.6484907,8,24,false],
-["صيدلية د. عراد بن علي","حي 100 مسكن","Cité 100 Logements Aile A N°1, Sidi Bel Abbès 22000","048 76 77 85",35.1966647,-0.6176962,0,24,true],
-["صيدلية بلعربي الحسين","AADL","AADL, Sidi Bel Abbès 22000","0549 67 98 94",35.2185763,-0.6275044,8,24,false],
-["صيدلية معاشو محمد","حي 237 مسكن","Cité 237 Logts, Sidi Bel Abbès","0561 06 28 18",35.2125875,-0.6232656,8,27,false],
-["صيدلية المؤسسة","حي الجزائرة","Site 2 DGSN, Haï El Djazeera, Sidi Bel Abbès 22000","0668 73 38 31",35.1785633,-0.6117378,8.25,24,false],
-["صيدلية نبال","بوليفار عبان رمضان","Bd Abane Ramdane, Sidi Bel Abbès 22002","0542 31 47 07",35.1923259,-0.6186891,8,23,false],
-["صيدلية سي أحمد نذير","سيدي بلعباس","Sidi Bel Abbès 22000","0664 40 64 46",35.2122881,-0.6251282,8,23,false],
-["صيدلية عصاد","بوليفار محمد الخميستي","04 Bd Mohamed Khemisti, Sidi Bel Abbès 22000",null,35.1866666,-0.632567,8.5,23,false],
-["صيدلية سيد أحمد","شارع الراسي مهاجي","Rue Rassi M'Hadji, Sidi Bel Abbès",null,35.2056856,-0.6299211,8,23,false],
-["صيدلية شارع حواورية عبد القادر","سيدي بلعباس","Rue Houaoria Abdelkader, Sidi Bel Abbès 22000","048 72 40 31",35.1870193,-0.6470397,8.5,21,false],
-["صيدلية حاجب إبراهيم","بوليفار عيساط إيدير","Unnamed Rd, Sidi Bel Abbès","048 72 09 53",35.2164652,-0.6206502,8,21,false],
-["صيدلية فرتوت","سيدي بلعباس","Unnamed Rd, Sidi Bel Abbès 22002","048 75 82 31",35.1893368,-0.6123998,8.5,22,false],
-["صيدلية بوزيدي يحيى","سيدي بلعباس","Unnamed Rd, Sidi Bel Abbès","048 77 50 35",35.1753948,-0.6215078,9,21,false],
-["صيدلية شرشالي","شارع أحمد زبانة","Rue Ahmed Zabana, Sidi Bel Abbès",null,35.1876422,-0.6225517,8.5,22.17,false],
-["صيدلية بن حدو","سيدي بلعباس","Sidi Bel Abbès",null,35.214565,-0.620614,8.5,24,false],
-["صيدلية حماد جيلالي","بوليفار عيساط إيدير","Bd Aissat Idir, Sidi Bel Abbès","0559 56 87 22",35.1945066,-0.6248018,0,24,true],
-["صيدلية هديبي","سيدي بلعباس","Sidi Bel Abbès",null,35.2121015,-0.6290114,8,22,false],
-["صيدلية طلحة","سيدي بلعباس","Sidi Bel Abbès","0779 23 47 38",35.2116249,-0.6214044,8.5,24,false],
-["صيدلية بلحاج عمر بلقاسم","نهج بوشارب زيتوني","Sidi Bel Abbès 22002",null,35.1883583,-0.6158417,8,21,false],
-["صيدلية الشيخ أمين","سيدي بلعباس","Sidi Bel Abbès",null,35.182191,-0.6311097,0,24,true],
-["صيدلية الوفاء","سيدي بلعباس","Sidi Bel Abbès",null,35.2092497,-0.6506582,8,21,false],
-["صيدلية شارع مدغشقر","شارع مدغشقر","25 Rue Madagascar, Sidi Bel Abbès 22000",null,35.1839758,-0.6442548,8,21,false]
-].map((p,i)=>({id:i+1,name:p[0],area:p[1],address:p[2],phone:p[3],lat:p[4],lng:p[5],hours:{open:p[6],close:p[7]},onDuty:p[8],wilaya:"سيدي بلعباس",verified:true}));
+const RAW_PHARMACIES = [
+  { id: 1, name: "صيدلية بوعشة فريد", area: "شارع 08 نوفمبر", address: "Rue 08 Novembre, Sidi Bel Abbès", phone: null, lat: 35.1994115, lng: -0.6453492, hours: { open: 8, close: 24 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 2, name: "صيدلية أنس بن الأزهر", area: "سيدي جيلالي", address: "Agence Foncière, Sidi Djilali, Sidi Bel Abbès", phone: "040 73 11 11", lat: 35.2100923, lng: -0.6308727, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 3, name: "صيدلية منصور وفاء", area: "سيدي جيلالي", address: "250 Segar Abdelaziz, Secteur 1, Sidi Djilali", phone: null, lat: 35.2156413, lng: -0.6350891, hours: { open: 8.5, close: 24 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 4, name: "صيدلية بن حمودة", area: "سيدي بلعباس", address: "Unnamed Rd, Sidi Bel Abbès 22000", phone: "0557 48 64 80", lat: 35.2194202, lng: -0.6259365, hours: { open: 8, close: 25 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 5, name: "صيدلية د. عربي", area: "روڨاب عكاشة", address: "Telmouni N°23 Lot 36, Rouggab Okkacha, Sidi Bel Abbès", phone: "0542 61 77 50", lat: 35.1736176, lng: -0.5448622, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 6, name: "صيدلية بن عز الدين عبد الصمد", area: "بوليفار بنديدة", address: "56 Bd Bendida Mohamed, Sidi Bel Abbès 22002", phone: "0770 80 52 35", lat: 35.1950042, lng: -0.6194100, hours: { open: 8, close: 26.5 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 7, name: "صيدلية رقبال محل", area: "سيدي بلعباس", address: "17 Rue Laziz Ghalem, Sidi Bel Abbès", phone: "0542 69 78 07", lat: 35.1976143, lng: -0.6484907, hours: { open: 8, close: 24 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 8, name: "صيدلية د. عراد بن علي", area: "حي 100 مسكن", address: "Cité 100 Logements Aile A N°1, Sidi Bel Abbès 22000", phone: "048 76 77 85", lat: 35.1966647, lng: -0.6176962, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 9, name: "صيدلية بلعربي الحسين", area: "AADL", address: "AADL, Sidi Bel Abbès 22000", phone: "0549 67 98 94", lat: 35.2185763, lng: -0.6275044, hours: { open: 8, close: 24 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 10, name: "صيدلية معاشو محمد", area: "حي 237 مسكن", address: "Cité 237 Logts, Sidi Bel Abbès", phone: "0561 06 28 18", lat: 35.2125875, lng: -0.6232656, hours: { open: 8, close: 27 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 11, name: "صيدلية المؤسسة", area: "حي الجزائرة", address: "Site 2 DGSN, Haï El Djazeera, Sidi Bel Abbès 22000", phone: "0668 73 38 31", lat: 35.1785633, lng: -0.6117378, hours: { open: 8.25, close: 24 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 12, name: "صيدلية نبال", area: "بوليفار عبان رمضان", address: "Bd Abane Ramdane, Sidi Bel Abbès 22002", phone: "0542 31 47 07", lat: 35.1923259, lng: -0.6186891, hours: { open: 8, close: 23 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 13, name: "صيدلية سي أحمد نذير", area: "سيدي بلعباس", address: "Sidi Bel Abbès 22000", phone: "0664 40 64 46", lat: 35.2122881, lng: -0.6251282, hours: { open: 8, close: 23 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 14, name: "صيدلية عصاد", area: "بوليفار محمد الخميستي", address: "04 Bd Mohamed Khemisti, Sidi Bel Abbès 22000", phone: null, lat: 35.1866666, lng: -0.632567, hours: { open: 8.5, close: 23 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 15, name: "صيدلية سيد أحمد", area: "شارع الراسي مهاجي", address: "Rue Rassi M'Hadji, Sidi Bel Abbès", phone: null, lat: 35.2056856, lng: -0.6299211, hours: { open: 8, close: 23 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 16, name: "صيدلية شارع حواورية عبد القادر", area: "سيدي بلعباس", address: "Rue Houaoria Abdelkader, Sidi Bel Abbès 22000", phone: "048 72 40 31", lat: 35.1870193, lng: -0.6470397, hours: { open: 8.5, close: 21 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 17, name: "صيدلية حاجب إبراهيم", area: "بوليفار عيساط إيدير", address: "Unnamed Rd, Sidi Bel Abbès", phone: "048 72 09 53", lat: 35.2164652, lng: -0.6206502, hours: { open: 8, close: 21 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 18, name: "صيدلية فرتوت", area: "سيدي بلعباس", address: "Unnamed Rd, Sidi Bel Abbès 22002", phone: "048 75 82 31", lat: 35.1893368, lng: -0.6123998, hours: { open: 8.5, close: 22 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 19, name: "صيدلية بوزيدي يحيى", area: "سيدي بلعباس", address: "Unnamed Rd, Sidi Bel Abbès", phone: "048 77 50 35", lat: 35.1753948, lng: -0.6215078, hours: { open: 9, close: 21 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 20, name: "صيدلية شرشالي", area: "شارع أحمد زبانة", address: "Rue Ahmed Zabana, Sidi Bel Abbès", phone: null, lat: 35.1876422, lng: -0.6225517, hours: { open: 8.5, close: 22.17 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 21, name: "صيدلية بن حدو", area: "سيدي بلعباس", address: "Sidi Bel Abbès", phone: null, lat: 35.214565, lng: -0.620614, hours: { open: 8.5, close: 24 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 22, name: "صيدلية حماد جيلالي", area: "بوليفار عيساط إيدير", address: "Bd Aissat Idir, Sidi Bel Abbès", phone: "0559 56 87 22", lat: 35.1945066, lng: -0.6248018, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
 
-const WILAYAS = ["أدرار","الشلف","الأغواط","أم البواقي","باتنة","بجاية","بسكرة","بشار","البليدة","البويرة","تمنراست","تبسة","تلمسان","تيارت","تيزي وزو","الجزائر","الجلفة","جيجل","سطيف","سعيدة","سكيكدة","سيدي بلعباس","عنابة","قالمة","قسنطينة","المدية","مستغانم","المسيلة","معسكر","ورقلة","وهران","البيض","إليزي","برج بوعريريج","بومرداس","الطارف","تندوف","تيسمسيلت","الوادي","خنشلة","سوق أهراس","تيبازة","ميلة","عين الدفلى","النعامة","عين تموشنت","غرداية","غليزان","تيميمون","برج باجي مختار","أولاد جلال","بني عباس","عين صالح","عين قزام","تقرت","جانت","المغير","المنيعة"].map((name,i)=>({id:i+1,name,enabled:name==="سيدي بلعباس"}));
+  { id: 23, name: "صيدلية هديبي", area: "سيدي بلعباس", address: "Sidi Bel Abbès", phone: null, lat: 35.2121015, lng: -0.6290114, hours: { open: 8, close: 22 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 24, name: "صيدلية طلحة", area: "سيدي بلعباس", address: "Sidi Bel Abbès", phone: "0779 23 47 38", lat: 35.2116249, lng: -0.6214044, hours: { open: 8.5, close: 24 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 25, name: "صيدلية بلحاج عمر بلقاسم", area: "نهج بوشارب زيتوني", address: "Sidi Bel Abbès 22002", phone: null, lat: 35.1883583, lng: -0.6158417, hours: { open: 8, close: 21 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 26, name: "صيدلية الشيخ أمين", area: "سيدي بلعباس", address: "Sidi Bel Abbès", phone: null, lat: 35.182191, lng: -0.6311097, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 27, name: "صيدلية الوفاء", area: "سيدي بلعباس", address: "Sidi Bel Abbès", phone: null, lat: 35.2092497, lng: -0.6506582, hours: { open: 8, close: 21 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  { id: 28, name: "صيدلية شارع مدغشقر", area: "شارع مدغشقر", address: "25 Rue Madagascar, Sidi Bel Abbès 22000", phone: null, lat: 35.1839758, lng: -0.6442548, hours: { open: 8, close: 21 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
+];
 
-const COMMUNES = ["سيدي بلعباس","تلاغ","تسالة","مرين","الحصايبة","بن باديس","سيدي علي بوسيدي","مصطفى بن إبراهيم","رأس الماء","سيدي خالد","عين البرد","سفيزف","بوجبهة","المكدرة","أولاد خالد"].map((name,i)=>({id:i+1,name,enabled:true}));
+const WILAYAS = [
+  "أدرار", "الشلف", "الأغواط", "أم البواقي", "باتنة", "بجاية", "بسكرة", "بشار",
+  "البليدة", "البويرة", "تمنراست", "تبسة", "تلمسان", "تيارت", "تيزي وزو", "الجزائر",
+  "الجلفة", "جيجل", "سطيف", "سعيدة", "سكيكدة", "سيدي بلعباس", "عنابة", "قالمة",
+  "قسنطينة", "المدية", "مستغانم", "المسيلة", "معسكر", "ورقلة", "وهران", "البيض",
+  "إليزي", "برج بوعريريج", "بومرداس", "الطارف", "تندوف", "تيسمسيلت", "الوادي",
+  "خنشلة", "سوق أهراس", "تيبازة", "ميلة", "عين الدفلى", "النعامة", "عين تموشنت",
+  "غرداية", "غليزان", "تيميمون", "برج باجي مختار", "أولاد جلال", "بني عباس",
+  "عين صالح", "عين قزام", "تقرت", "جانت", "المغير", "المنيعة",
+].map((name, i) => ({ id: i + 1, name, enabled: name === "سيدي بلعباس" }));
 
-const T={
-ar:{tagline:"صيدليات {wilaya}، الآن",dashboard:"لوحة التحكم",openStat:"صيدلية مفتوحة حالياً من أصل {total}",searchPlaceholder:"ابحث باسم الصيدلية أو الحي...",filterAll:"الكل",filterOpen:"المفتوحة فقط",filterUrgent:"مستعجل ❗",filterFavorites:"المفضلة ♥",noFavorites:"ما عندك صيدليات مفضلة بعد. دوس على القلب لتضيفها.",noResults:"لا توجد نتائج مطابقة لبحثك.",openNow:"مفتوحة الآن",closedNow:"مغلقة",onDutyLabel:"مناوبة · 24 ساعة",closesAt:"يغلق الساعة {time}",opensAt:"يفتح الساعة {time}",directions:"فتح الاتجاهات",reportTitle:"الإبلاغ عن هذه الصيدلية",reviewsTitle:"المراجعات",noRatingsYet:"لا توجد تقييمات بعد",ratingsCount:"({n} تقييم)",yourRating:"قيّم هذه الصيدلية",reviewPlaceholder:"شاركنا تجربتك (اختياري)...",submitReview:"إرسال التقييم",reviewSubmitted:"شكراً على تقييمك!",pickStarsFirst:"اختر عدد النجوم أول.",changeWilaya:"تغيير الولاية",wilayaLabel:"الولاية",communeLabel:"البلدية",comingSoon:"قريباً",addPharmacyBtn:"أضف صيدليتك",addPharmacyTitle:"تسجيل صيدلية جديدة",formName:"اسم الصيدلية",formArea:"الحي / المنطقة",formAddress:"العنوان الكامل",formPhone:"رقم الهاتف (اختياري)",formOnDuty:"مناوبة 24 ساعة",formOpenHour:"ساعة الفتح",formCloseHour:"ساعة الغلق",useMyLocation:"استعمل موقعي الحالي",locationCaptured:"تم تحديد الموقع ✓",locationFailed:"تعذر تحديد الموقع، تأكد من تفعيل GPS.",submitNewPharmacy:"إرسال التسجيل",submittingPharmacy:"جاري الإرسال...",newPharmacySuccess:"تم تسجيل صيدليتك بنجاح.",newPharmacyError:"صار خطأ أثناء الإرسال، حاول مرة أخرى.",formRequiredError:"عمر اسم الصيدلية والعنوان على الأقل.",unverifiedBadge:"غير موثقة",unverifiedNote:"أُضيفت من طرف صاحبها ولم تُتحقق بعد.",adminTitle:"لوحة التحكم",adminLoginTitle:"دخول المسؤول",loginBtn:"دخول",loginError:"بيانات الدخول غير صحيحة.",logoutBtn:"خروج",adminEmpty:"لا توجد صيدليات قيد المراجعة حالياً.",deleteFinal:"حذف نهائي",verifyReturn:"تحققت — إعادتها للقائمة",allPharmaciesTab:"كل الصيدليات ({n})"},
-fr:{tagline:"Pharmacies de {wilaya}, en direct",dashboard:"Tableau de bord",openStat:"pharmacie(s) ouverte(s) sur {total}",searchPlaceholder:"Rechercher une pharmacie ou un quartier...",filterAll:"Toutes",filterOpen:"Ouvertes",filterUrgent:"Urgent ❗",filterFavorites:"Favoris ♥",noFavorites:"Aucun favori pour l'instant.",noResults:"Aucun résultat.",openNow:"Ouverte maintenant",closedNow:"Fermée",onDutyLabel:"De garde · 24h/24",closesAt:"Ferme à {time}",opensAt:"Ouvre à {time}",directions:"Itinéraire",reportTitle:"Signaler",reviewsTitle:"Avis",noRatingsYet:"Pas encore d'avis",ratingsCount:"({n} avis)",yourRating:"Notez cette pharmacie",reviewPlaceholder:"Partagez votre expérience...",submitReview:"Envoyer l'avis",reviewSubmitted:"Merci pour votre avis !",pickStarsFirst:"Choisissez d'abord une note.",changeWilaya:"Changer de wilaya",wilayaLabel:"Wilaya",communeLabel:"Commune",comingSoon:"Bientôt",addPharmacyBtn:"Ajouter votre pharmacie",addPharmacyTitle:"Enregistrer une nouvelle pharmacie",formName:"Nom de la pharmacie",formArea:"Quartier / Secteur",formAddress:"Adresse complète",formPhone:"Téléphone (facultatif)",formOnDuty:"De garde 24h/24",formOpenHour:"Heure d'ouverture",formCloseHour:"Heure de fermeture",useMyLocation:"Utiliser ma position",locationCaptured:"Position enregistrée ✓",locationFailed:"Impossible de localiser.",submitNewPharmacy:"Envoyer",submittingPharmacy:"Envoi...",newPharmacySuccess:"Pharmacie enregistrée.",newPharmacyError:"Une erreur est survenue.",formRequiredError:"Renseignez au moins le nom et l'adresse.",unverifiedBadge:"Non vérifiée",unverifiedNote:"Ajoutée par son propriétaire, pas encore vérifiée.",adminTitle:"Tableau de bord",adminLoginTitle:"Connexion administrateur",loginBtn:"Se connecter",loginError:"Identifiants incorrects.",logoutBtn:"Déconnexion",adminEmpty:"Aucune pharmacie en révision.",deleteFinal:"Supprimer définitivement",verifyReturn:"Vérifié — remettre en ligne",allPharmaciesTab:"Toutes les pharmacies ({n})"},
-en:{tagline:"{wilaya} pharmacies, live",dashboard:"Dashboard",openStat:"pharmacies open now out of {total}",searchPlaceholder:"Search by pharmacy name or neighborhood...",filterAll:"All",filterOpen:"Open only",filterUrgent:"Urgent ❗",filterFavorites:"Favorites ♥",noFavorites:"No favorite pharmacies yet.",noResults:"No results.",openNow:"Open now",closedNow:"Closed",onDutyLabel:"On duty · 24h",closesAt:"Closes at {time}",opensAt:"Opens at {time}",directions:"Get directions",reportTitle:"Report",reviewsTitle:"Reviews",noRatingsYet:"No ratings yet",ratingsCount:"({n} ratings)",yourRating:"Rate this pharmacy",reviewPlaceholder:"Share your experience...",submitReview:"Submit rating",reviewSubmitted:"Thanks for your rating!",pickStarsFirst:"Pick a star rating first.",changeWilaya:"Change wilaya",wilayaLabel:"Wilaya",communeLabel:"Commune",comingSoon:"Coming soon",addPharmacyBtn:"Add your pharmacy",addPharmacyTitle:"Register a new pharmacy",formName:"Pharmacy name",formArea:"Neighborhood / Area",formAddress:"Full address",formPhone:"Phone (optional)",formOnDuty:"On duty 24h",formOpenHour:"Opening hour",formCloseHour:"Closing hour",useMyLocation:"Use my location",locationCaptured:"Location captured ✓",locationFailed:"Couldn't get location.",submitNewPharmacy:"Submit",submittingPharmacy:"Submitting...",newPharmacySuccess:"Pharmacy registered.",newPharmacyError:"Something went wrong.",formRequiredError:"Fill in at least the name and address.",unverifiedBadge:"Unverified",unverifiedNote:"Added by owner, not yet verified.",adminTitle:"Dashboard",adminLoginTitle:"Admin login",loginBtn:"Log in",loginError:"Incorrect credentials.",logoutBtn:"Log out",adminEmpty:"No pharmacies under review.",deleteFinal:"Delete permanently",verifyReturn:"Verified — restore listing",allPharmaciesTab:"All pharmacies ({n})"}
+const COMMUNES = [
+  "سيدي بلعباس", "تلاغ", "تسالة", "مرين", "الحصايبة", "بن باديس",
+  "سيدي علي بوسيدي", "مصطفى بن إبراهيم", "رأس الماء", "سيدي خالد",
+  "عين البرد", "سفيزف", "بوجبهة", "المكدرة", "أولاد خالد",
+].map((name, i) => ({ id: i + 1, name, enabled: name === "سيدي بلعباس" }));
+
+const T = {
+  ar: {
+    tagline: "صيدليات {wilaya}، الآن", dashboard: "لوحة التحكم",
+    openStat: "صيدلية مفتوحة حالياً من أصل {total}",
+    searchPlaceholder: "ابحث باسم الصيدلية أو الحي...",
+    filterAll: "الكل", filterOpen: "المفتوحة فقط", filterUrgent: "مستعجل \u2757",
+    filterFavorites: "المفضلة \u2665",
+    addedFavorite: 'أُضيفت "{name}" للمفضلة.', removedFavorite: 'أُزيلت "{name}" من المفضلة.',
+    noFavorites: "ما عندك صيدليات مفضلة بعد. دوس على القلب لتضيفها.",
+    noRatingsYet: "لا توجد تقييمات بعد", ratingsCount: "({n} تقييم)",
+    yourRating: "قيّم هذه الصيدلية", reviewPlaceholder: "شاركنا تجربتك (اختياري)...",
+    submitReview: "إرسال التقييم", reviewSubmitted: "شكراً على تقييمك!",
+    pickStarsFirst: "اختر عدد النجوم أول.", reviewsTitle: "المراجعات",
+    communeLabel: "البلدية", changeWilaya: "تغيير الولاية",
+    reviewBtn: "قيد المراجعة ({n})", noResults: "لا توجد نتائج مطابقة لبحثك.",
+    underReviewBanner: "وصلت لـ {n} شكاوى — بانتظار مراجعة المسؤول قبل أي إجراء",
+    openNow: "مفتوحة الآن", closedNow: "مغلقة", closedNowFull: "مغلقة الآن",
+    onDutyLabel: "مناوبة \u00b7 24 ساعة", closesAt: "يغلق الساعة {time}", opensAt: "يفتح الساعة {time}",
+    reportTitle: "الإبلاغ عن هذه الصيدلية", directions: "فتح الاتجاهات",
+    underReviewDetail: "هذه الصيدلية وصلت إلى {n} شكاوى وهي الآن قيد المراجعة اليدوية. لن تُحذف تلقائياً — القرار النهائي يتطلب تحقق المسؤول.",
+    adminTitle: "لوحة التحكم", adminSubtitle: "صيدليات قيد المراجعة — وصلت للحد الأدنى من الشكاوى ({n}) وتنتظر قرارك",
+    adminEmpty: "لا توجد صيدليات قيد المراجعة حالياً.", verifyReturn: "تحققت — إعادتها للقائمة", deleteFinal: "حذف نهائي",
+    wilayaLabel: "الولاية", comingSoon: "قريباً",
+    alreadyReported: "تم إرسال شكواك على هذه الصيدلية مسبقاً.", thanksReport: "شكرًا، تم استلام بلاغك.",
+    thresholdReached: 'تم رصد {n} شكاوى على "{name}" — أُرسلت للمراجعة اليدوية.',
+    dismissedToast: 'تمت إعادة "{name}" للقائمة العادية ومسح الشكاوى عنها.',
+    removedToast: 'تم حذف "{name}" نهائياً من التطبيق.',
+    wilayaComingSoonToast: '{name} — لا توجد بيانات بعد، قريباً إن شاء الله.',
+    joinBanner: "صاحب صيدلية؟ سجّل صيدليتك بالتطبيق مجاناً",
+    joinTitle: "تسجيل صيدلية جديدة",
+    joinName: "اسم الصيدلية *", joinArea: "الحي / المنطقة", joinAddress: "العنوان بالتفصيل", joinPhone: "رقم الهاتف *",
+    joinOpen: "وقت الفتح", joinClose: "وقت الإغلاق", joinSubmit: "إرسال الطلب", joinCancel: "إلغاء",
+    joinFillRequired: "الرجاء إدخال اسم الصيدلية ورقم الهاتف على الأقل.",
+    joinSubmitted: "تم إرسال طلبك بنجاح! سيتم مراجعته من الإدارة قريباً.",
+    joinApproved: 'تم قبول "{name}" وإضافتها للتطبيق.', joinRejected: 'تم رفض طلب "{name}".',
+    joinRequestsTitle: "طلبات انضمام الصيدليات", joinRequestsEmpty: "لا توجد طلبات انضمام حالياً.",
+    joinApprove: "قبول", joinReject: "رفض",
+    adminLoginTitle: "دخول لوحة التحكم", adminPasscodePlaceholder: "كلمة السر", adminLoginBtn: "دخول", adminWrongPasscode: "كلمة السر غير صحيحة.",
+  },
+  fr: {
+    tagline: "Pharmacies de {wilaya}, en direct", dashboard: "Tableau de bord",
+    openStat: "pharmacie(s) ouverte(s) sur {total}",
+    searchPlaceholder: "Rechercher une pharmacie ou un quartier...",
+    filterAll: "Toutes", filterOpen: "Ouvertes uniquement", filterUrgent: "Urgent \u2757",
+    filterFavorites: "Favoris \u2665",
+    addedFavorite: '"{name}" ajoutée aux favoris.', removedFavorite: '"{name}" retirée des favoris.',
+    noFavorites: "Aucune pharmacie favorite pour l'instant. Touchez le cœur pour en ajouter.",
+    noRatingsYet: "Pas encore d'avis", ratingsCount: "({n} avis)",
+    yourRating: "Notez cette pharmacie", reviewPlaceholder: "Partagez votre expérience (facultatif)...",
+    submitReview: "Envoyer l'avis", reviewSubmitted: "Merci pour votre avis !",
+    pickStarsFirst: "Choisissez d'abord un nombre d'étoiles.", reviewsTitle: "Avis",
+    communeLabel: "Commune", changeWilaya: "Changer de wilaya",
+    reviewBtn: "En révision ({n})", noResults: "Aucun résultat pour votre recherche.",
+    underReviewBanner: "{n} signalements reçus — en attente de vérification par l'administrateur",
+    openNow: "Ouverte maintenant", closedNow: "Fermée", closedNowFull: "Fermée maintenant",
+    onDutyLabel: "De garde \u00b7 24h/24", closesAt: "Ferme à {time}", opensAt: "Ouvre à {time}",
+    reportTitle: "Signaler cette pharmacie", directions: "Itinéraire",
+    underReviewDetail: "Cette pharmacie a reçu {n} signalements et est en cours de vérification. Aucune suppression automatique — la décision finale revient à l'administrateur.",
+    adminTitle: "Tableau de bord", adminSubtitle: "Pharmacies en révision — ont atteint le seuil de {n} signalements et attendent votre décision",
+    adminEmpty: "Aucune pharmacie en révision pour le moment.", verifyReturn: "Vérifié — la remettre en ligne", deleteFinal: "Supprimer définitivement",
+    wilayaLabel: "Wilaya", comingSoon: "Bientôt",
+    alreadyReported: "Vous avez déjà signalé cette pharmacie.", thanksReport: "Merci, votre signalement a été reçu.",
+    thresholdReached: 'Seuil de {n} signalements atteint pour "{name}" — envoyée en révision.',
+    dismissedToast: '"{name}" a été remise en ligne et ses signalements effacés.',
+    removedToast: '"{name}" a été définitivement supprimée de l\'application.',
+    wilayaComingSoonToast: '{name} — pas encore de données, bientôt disponible.',
+    joinBanner: "Vous êtes pharmacien ? Inscrivez votre pharmacie gratuitement",
+    joinTitle: "Inscription d'une nouvelle pharmacie",
+    joinName: "Nom de la pharmacie *", joinArea: "Quartier / zone", joinAddress: "Adresse détaillée", joinPhone: "Numéro de téléphone *",
+    joinOpen: "Heure d'ouverture", joinClose: "Heure de fermeture", joinSubmit: "Envoyer la demande", joinCancel: "Annuler",
+    joinFillRequired: "Merci de renseigner au moins le nom et le téléphone.",
+    joinSubmitted: "Demande envoyée ! Elle sera examinée par l'administration prochainement.",
+    joinApproved: '"{name}" a été approuvée et ajoutée à l\'application.', joinRejected: 'La demande de "{name}" a été refusée.',
+    joinRequestsTitle: "Demandes d'adhésion des pharmacies", joinRequestsEmpty: "Aucune demande d'adhésion pour le moment.",
+    joinApprove: "Approuver", joinReject: "Refuser",
+    adminLoginTitle: "Accès au tableau de bord", adminPasscodePlaceholder: "Mot de passe", adminLoginBtn: "Entrer", adminWrongPasscode: "Mot de passe incorrect.",
+  },
+  en: {
+    tagline: "{wilaya} pharmacies, live", dashboard: "Dashboard",
+    openStat: "pharmacies open now out of {total}",
+    searchPlaceholder: "Search by pharmacy name or neighborhood...",
+    filterAll: "All", filterOpen: "Open only", filterUrgent: "Urgent \u2757",
+    filterFavorites: "Favorites \u2665",
+    addedFavorite: '"{name}" added to favorites.', removedFavorite: '"{name}" removed from favorites.',
+    noFavorites: "No favorite pharmacies yet. Tap the heart to add one.",
+    noRatingsYet: "No ratings yet", ratingsCount: "({n} ratings)",
+    yourRating: "Rate this pharmacy", reviewPlaceholder: "Share your experience (optional)...",
+    submitReview: "Submit rating", reviewSubmitted: "Thanks for your rating!",
+    pickStarsFirst: "Pick a star rating first.", reviewsTitle: "Reviews",
+    communeLabel: "Commune", changeWilaya: "Change wilaya",
+    reviewBtn: "Under review ({n})", noResults: "No results match your search.",
+    underReviewBanner: "{n} complaints received — awaiting admin review",
+    openNow: "Open now", closedNow: "Closed", closedNowFull: "Closed now",
+    onDutyLabel: "On duty \u00b7 24h", closesAt: "Closes at {time}", opensAt: "Opens at {time}",
+    reportTitle: "Report this pharmacy", directions: "Get directions",
+    underReviewDetail: "This pharmacy has received {n} complaints and is under manual review. It won't be removed automatically — the final decision requires admin verification.",
+    adminTitle: "Dashboard", adminSubtitle: "Pharmacies under review — reached the {n}-complaint threshold and await your decision",
+    adminEmpty: "No pharmacies under review right now.", verifyReturn: "Verified — restore listing", deleteFinal: "Delete permanently",
+    wilayaLabel: "Wilaya", comingSoon: "Coming soon",
+    alreadyReported: "You've already reported this pharmacy.", thanksReport: "Thanks, your report was received.",
+    thresholdReached: 'Threshold of {n} complaints reached for "{name}" — sent for manual review.',
+    dismissedToast: '"{name}" was restored to the listing and its complaints cleared.',
+    removedToast: '"{name}" was permanently removed from the app.',
+    wilayaComingSoonToast: '{name} — no data yet, coming soon.',
+    joinBanner: "Own a pharmacy? Register it on the app for free",
+    joinTitle: "Register a new pharmacy",
+    joinName: "Pharmacy name *", joinArea: "Neighborhood / area", joinAddress: "Detailed address", joinPhone: "Phone number *",
+    joinOpen: "Opening time", joinClose: "Closing time", joinSubmit: "Submit request", joinCancel: "Cancel",
+    joinFillRequired: "Please enter at least the name and phone number.",
+    joinSubmitted: "Request submitted! It will be reviewed by the admin soon.",
+    joinApproved: '"{name}" was approved and added to the app.', joinRejected: 'The request for "{name}" was rejected.',
+    joinRequestsTitle: "Pharmacy join requests", joinRequestsEmpty: "No join requests right now.",
+    joinApprove: "Approve", joinReject: "Reject",
+    adminLoginTitle: "Dashboard access", adminPasscodePlaceholder: "Passcode", adminLoginBtn: "Enter", adminWrongPasscode: "Incorrect passcode.",
+  },
 };
 
-function tr(lang,key,vars={}){let s=(T[lang]&&T[lang][key])||T.ar[key]||key;Object.entries(vars).forEach(([k,v])=>s=s.replace(`{${k}}`,v));return s;}
-function useNow(){const[n,setN]=useState(new Date());useEffect(()=>{const t=setInterval(()=>setN(new Date()),30000);return()=>clearInterval(t)},[]);return n;}
-function status(ph,now){const h=now.getHours()+now.getMinutes()/60;if(ph.onDuty)return{open:true,kind:"onDuty"};const{o,c}=ph.hours;const open=c>24?h>=o||h<c-24:h>=o&&h<c;return{open,kind:open?"closesAt":"opensAt",time:open?c%24:o};}
-function fmt(h){const hh=Math.floor(h)%24,mm=Math.round((h-Math.floor(h))*60);return String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0");}
-function dist(a,b,c,d){const R=6371,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,q=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));}
-
-const DEFAULT_LOC={lat:35.1917,lng:-0.6355};
-
-function PharmacyFinder(){
-const now=useNow(),[query,setQuery]=useState(""),[filter,setFilter]=useState("all"),[selected,setSelected]=useState(null),[lang,setLang]=useState("ar"),[wilayaOpen,setWilayaOpen]=useState(false),[favorites,setFavorites]=useState(new Set()),[ratings,setRatings]=useState({}),[draftStars,setDraftStars]=useState(0),[draftText,setDraftText]=useState(""),[myReviews,setMyReviews]=useState({}),[toast,setToast]=useState(null),[userLoc,setUserLoc]=useState(DEFAULT_LOC),[submitted,setSubmitted]=useState([]),[showAdd,setShowAdd]=useState(false),[formName,setFormName]=useState(""),[formArea,setFormArea]=useState(""),[formAddress,setFormAddress]=useState(""),[formPhone,setFormPhone]=useState(""),[formOpen,setFormOpen]=useState(8),[formClose,setFormClose]=useState(21),[formDuty,setFormDuty]=useState(false),[formLoc,setFormLoc]=useState(null),[formLocStatus,setFormLocStatus]=useState(null),[adminUser,setAdminUser]=useState(null),[showLogin,setShowLogin]=useState(false),[loginEmail,setLoginEmail]=useState(""),[loginPassword,setLoginPassword]=useState(""),[loginError,setLoginError]=useState(""),[adminView,setAdminView]=useState(false),[removed,setRemoved]=useState(new Set());
-
-const t=(k,v)=>tr(lang,k,v),dir=lang==="ar"?"rtl":"ltr",wilaya=WILAYAS.find(x=>x.id===22),commune=COMMUNES[0];
-
-useEffect(()=>{navigator.geolocation?.getCurrentPosition(p=>setUserLoc({lat:p.coords.latitude,lng:p.coords.longitude}),()=>{}, {timeout:8000})},[]);
-useEffect(()=>{db.collection("pharmacies_submitted").where("wilaya","==",wilaya.name).get().then(s=>setSubmitted(s.docs.map(d=>({id:d.id,...d.data()})))).catch(()=>{})},[]);
-useEffect(()=>{const u=auth.onAuthStateChanged(setAdminUser);return()=>u()},[]);
-useEffect(()=>{db.collection("removed_pharmacies").get().then(s=>setRemoved(new Set(s.docs.map(d=>isNaN(d.id)?d.id:Number(d.id))))) .catch(()=>{})},[]);
-useEffect(()=>{if(selected){const r=myReviews[selected.id];setDraftStars(r?.stars||0);setDraftText(r?.text||"")}},[selected]);
-
-const all=useMemo(()=>[...PHARMACIES,...submitted.map(p=>({...p,verified:false}))].filter(p=>!removed.has(p.id)).map(p=>({...p,status:status(p,now),distance:dist(userLoc.lat,userLoc.lng,p.lat,p.lng),isFavorite:favorites.has(p.id),rating:ratings[p.id]||{sum:0,count:0}})),[now,submitted,removed,userLoc,favorites,ratings]);
-const list=useMemo(()=>all.filter(p=>(p.name+p.area+p.address).toLowerCase().includes(query.toLowerCase())).filter(p=>filter==="open"?p.status.open:true).filter(p=>filter==="urgent"?p.onDuty:true).filter(p=>filter==="favorites"?p.isFavorite:true).sort((a,b)=>a.distance-b.distance),[all,query,filter]);
-const openCount=list.filter(p=>p.status.open).length;
-const showToast=x=>{setToast(x);setTimeout(()=>setToast(null),3000)};
-
-const submitRating=()=>{if(!draftStars)return showToast(t("pickStarsFirst"));setRatings(x=>{const old=x[selected.id]||{sum:0,count:0},mine=myReviews[selected.id];return{...x,[selected.id]:{sum:mine?old.sum-mine.stars+draftStars:old.sum+draftStars,count:mine?old.count:old.count+1}}});setMyReviews(x=>({...x,[selected.id]:{stars:draftStars,text:draftText}}));showToast(t("reviewSubmitted"))};
-const capture=()=>navigator.geolocation?.getCurrentPosition(p=>{setFormLoc({lat:p.coords.latitude,lng:p.coords.longitude});setFormLocStatus("ok")},()=>setFormLocStatus("failed"),{timeout:8000});
-const submitPharmacy=async()=>{if(!formName.trim()||!formAddress.trim())return showToast(t("formRequiredError"));const loc=formLoc||userLoc;try{const payload={name:formName.trim(),area:formArea.trim(),address:formAddress.trim(),phone:formPhone.trim()||null,lat:loc.lat,lng:loc.lng,wilaya:wilaya.name,hours:{open:Number(formOpen),close:Number(formClose)},onDuty:formDuty,verified:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()};const ref=await db.collection("pharmacies_submitted").add(payload);setSubmitted(x=>[...x,{id:ref.id,...payload}]);showToast(t("newPharmacySuccess"));setShowAdd(false);setFormName("");setFormArea("");setFormAddress("");setFormPhone("")}catch(e){showToast(t("newPharmacyError"))}};
-const login=async()=>{try{await auth.signInWithEmailAndPassword(loginEmail.trim(),loginPassword);setShowLogin(false);setAdminView(true)}catch(e){setLoginError(t("loginError"))}};
-
-return <div dir={dir} className="min-h-screen bg-emerald-50 text-stone-900" style={{fontFamily:lang==="ar"?"'IBM Plex Sans Arabic',sans-serif":"'IBM Plex Sans',sans-serif"}}>
-<header className="sticky top-0 z-20 bg-emerald-950 text-emerald-50 px-5 pt-4 pb-5 rounded-b-2xl shadow-lg">
-<div className="flex items-center justify-between"><div><h1 className="text-xl font-bold text-emerald-400" dir="ltr">Pharis</h1><p className="text-xs text-emerald-300">{commune.name}</p></div><button onClick={()=>adminUser?setAdminView(true):setShowLogin(true)} className="mono text-emerald-400 text-[10px] border border-emerald-800 rounded-md px-2 py-1">{t("dashboard")}</button></div>
-<button onClick={()=>setWilayaOpen(x=>!x)} className="mt-3 w-full flex items-center justify-between rounded-xl px-3 py-2.5 bg-emerald-900 border border-emerald-700"><span className="flex items-center gap-2 text-sm"><MapPin className="w-4 h-4"/>{t("tagline",{wilaya:wilaya.name})}</span><span className="text-xs text-emerald-300 underline">{t("changeWilaya")}</span></button>
-<div className="flex gap-1.5 mt-2">{[["ar","العربية"],["fr","Français"],["en","English"]].map(x=><button key={x[0]} onClick={()=>setLang(x[0])} className={`px-2.5 py-1 rounded-full text-xs ${lang===x[0]?"bg-emerald-400 text-emerald-950":"bg-emerald-900 text-emerald-300"}`}>{x[1]}</button>)}</div>
-{wilayaOpen&&<div className="mt-3 bg-emerald-950 rounded-2xl p-3 border border-emerald-800"><p className="text-xs text-emerald-300 mb-2">{t("wilayaLabel")}</p><div className="grid grid-cols-2 gap-1">{WILAYAS.map(w=><button key={w.id} disabled={!w.enabled} className={`text-right text-xs px-2.5 py-1.5 rounded-lg ${w.enabled?"text-emerald-200 hover:bg-emerald-900":"text-emerald-700"}`}>{w.name}{!w.enabled&&<span className="text-[9px] mr-1">({t("comingSoon")})</span>}</button>)}</div></div>}
-<div className="mt-3 flex items-baseline gap-2"><span className="text-3xl font-bold mono text-emerald-400">{openCount}</span><span className="text-xs text-emerald-200">{t("openStat",{total:list.length})}</span></div>
-<div className="mt-3 relative"><Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t("searchPlaceholder")} className="w-full bg-emerald-900 placeholder-stone-500 text-emerald-50 rounded-xl pr-10 pl-4 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"/></div>
-<div className="flex gap-2 mt-2 flex-wrap"><button onClick={()=>setFilter("all")} className={`px-3 py-1 rounded-full text-xs ${filter==="all"?"bg-emerald-500 text-emerald-950":"bg-emerald-900 text-emerald-200"}`}>{t("filterAll")}</button><button onClick={()=>setFilter("urgent")} className={`px-3 py-1 rounded-full text-xs ${filter==="urgent"?"bg-rose-500 text-white":"bg-rose-950 text-rose-300"}`}>{t("filterUrgent")}</button><button onClick={()=>setFilter("open")} className={`px-3 py-1 rounded-full text-xs ${filter==="open"?"bg-emerald-500 text-emerald-950":"bg-emerald-900 text-emerald-200"}`}>{t("filterOpen")}</button><button onClick={()=>setFilter("favorites")} className={`px-3 py-1 rounded-full text-xs flex items-center gap-1 ${filter==="favorites"?"bg-emerald-500 text-emerald-950":"bg-emerald-900 text-emerald-200"}`}><Heart className="w-3 h-3"/>{t("filterFavorites")}</button><button onClick={()=>setShowAdd(true)} className="mr-auto px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400 text-emerald-950">+ {t("addPharmacyBtn")}</button></div>
-</header>
-{toast&&<div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-950 text-white text-sm px-4 py-2.5 rounded-full shadow-lg max-w-[90%] text-center">{toast}</div>}
-<main className="px-5 py-5 space-y-3 max-w-md mx-auto">{list.length===0&&<p className="text-center text-stone-500 mt-10">{filter==="favorites"?t("noFavorites"):t("noResults")}</p>}
-{list.map(ph=><div key={ph.id} className="w-full bg-white rounded-2xl p-4 shadow-sm border border-stone-200"><div className="flex items-center gap-3"><button onClick={()=>setSelected(ph)} className="flex-1 min-w-0 text-right flex items-center gap-3"><div className={`relative w-3 h-3 rounded-full pulse-dot flex-shrink-0 ${ph.status.open?"text-emerald-500 bg-emerald-500":"text-rose-500 bg-rose-500"}`}/><div className="flex-1 min-w-0"><div className="flex justify-between"><h3 className="font-semibold truncate">{ph.name}</h3><span className="mono text-xs text-stone-500 mr-2">{ph.distance.toFixed(1)} كم</span></div><p className="text-xs text-stone-500 mt-0.5">{ph.area} · {ph.address}</p><p className={`text-xs font-medium mt-1 ${ph.status.open?"text-emerald-700":"text-rose-500"}`}>{ph.status.open?t("openNow"):t("closedNow")} · {ph.status.kind==="onDuty"?t("onDutyLabel"):t(ph.status.kind,{time:fmt(ph.status.time)})}</p></div></button><button onClick={()=>setFavorites(x=>{const n=new Set(x);n.has(ph.id)?n.delete(ph.id):n.add(ph.id);return n})} className={ph.isFavorite?"text-rose-500":"text-stone-400"}><Heart className="w-5 h-5" fill={ph.isFavorite?"currentColor":"none"}/></button></div></div>)}</main>
-
-{selected&&<div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={()=>setSelected(null)}><div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim" onClick={e=>e.stopPropagation()}><div className="flex justify-between"><div><h2 className="text-xl font-bold">{selected.name}</h2><p className="text-sm text-stone-500">{selected.area}</p></div><button onClick={()=>setSelected(null)}><X className="w-5 h-5"/></button></div><div className={`inline-flex mt-3 px-3 py-1 rounded-full text-sm ${selected.status.open?"bg-emerald-50 text-emerald-700":"bg-rose-50 text-rose-500"}`}>{selected.status.open?t("openNow"):t("closedNow")}</div><div className="mt-4 space-y-3 text-sm"><div className="flex gap-2"><MapPin className="w-4 h-4"/>{selected.address}</div><div className="flex gap-2"><Navigation className="w-4 h-4"/>{selected.distance.toFixed(1)} كم</div><div className="flex gap-2"><Clock className="w-4 h-4"/>{selected.status.kind==="onDuty"?t("onDutyLabel"):t(selected.status.kind,{time:fmt(selected.status.time)})}</div>{selected.phone&&<div className="flex gap-2"><Phone className="w-4 h-4"/><span dir="ltr">{selected.phone}</span></div>}</div>
-<div className="mt-5 pt-4 border-t"><div className="flex justify-between"><h3 className="text-sm font-semibold">{t("reviewsTitle")}</h3>{selected.rating.count?<span className="text-sm text-amber-600">★ {(selected.rating.sum/selected.rating.count).toFixed(1)} {t("ratingsCount",{n:selected.rating.count})}</span>:<span className="text-xs text-stone-400">{t("noRatingsYet")}</span>}</div><p className="text-xs text-stone-500 mt-3">{t("yourRating")}</p><div className="flex gap-1">{[1,2,3,4,5].map(n=><button key={n} onClick={()=>setDraftStars(n)}><Star className={`w-6 h-6 ${n<=draftStars?"text-amber-500":"text-stone-200"}`} fill={n<=draftStars?"currentColor":"none"}/></button>)}</div><textarea value={draftText} onChange={e=>setDraftText(e.target.value)} placeholder={t("reviewPlaceholder")} rows="2" className="w-full mt-2 bg-stone-50 border rounded-xl px-3 py-2 text-sm resize-none"/><button onClick={submitRating} className="mt-2 w-full bg-emerald-700 text-white rounded-xl py-2 text-sm">{t("submitReview")}</button></div>
-<div className="flex gap-2 mt-5"><a href={`https://www.google.com/maps/dir/?api=1&destination=${selected.lat},${selected.lng}`} target="_blank" rel="noopener noreferrer" className="flex-1 bg-emerald-950 text-white rounded-xl py-3 text-center">{t("directions")}</a><button onClick={()=>showToast(t("thanksReport"))} className="px-4 rounded-xl border text-rose-500"><Flag className="w-4 h-4"/></button></div></div></div>}
-
-{showAdd&&<div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={()=>setShowAdd(false)}><div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}><div className="flex justify-between"><div><h2 className="text-xl font-bold">{t("addPharmacyTitle")}</h2></div><button onClick={()=>setShowAdd(false)}><X className="w-5 h-5"/></button></div><div className="mt-4 space-y-3">{[[t("formName"),formName,setFormName],[t("formArea"),formArea,setFormArea],[t("formAddress"),formAddress,setFormAddress],[t("formPhone"),formPhone,setFormPhone]].map((x,i)=><div key={i}><label className="text-xs text-stone-500">{x[0]}</label><input value={x[1]} onChange={e=>x[2](e.target.value)} className="w-full bg-stone-50 border rounded-xl px-3 py-2.5 text-sm"/></div>)}<label className="flex gap-2 text-sm"><input type="checkbox" checked={formDuty} onChange={e=>setFormDuty(e.target.checked)}/>{t("formOnDuty")}</label>{!formDuty&&<div className="grid grid-cols-2 gap-3"><input type="number" value={formOpen} onChange={e=>setFormOpen(e.target.value)} className="border rounded-xl p-2" placeholder={t("formOpenHour")}/><input type="number" value={formClose} onChange={e=>setFormClose(e.target.value)} className="border rounded-xl p-2" placeholder={t("formCloseHour")}/></div>}<button onClick={capture} className="w-full border rounded-xl py-2.5">{formLocStatus==="ok"?t("locationCaptured"):t("useMyLocation")}</button>{formLocStatus==="failed"&&<p className="text-xs text-rose-500">{t("locationFailed")}</p>}<button onClick={submitPharmacy} className="w-full bg-emerald-700 text-white rounded-xl py-3">{t("submitNewPharmacy")}</button></div></div></div>}
-
-{showLogin&&<div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={()=>setShowLogin(false)}><div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto" onClick={e=>e.stopPropagation()}><div className="flex justify-between"><h2 className="text-xl font-bold">{t("adminLoginTitle")}</h2><button onClick={()=>setShowLogin(false)}><X className="w-5 h-5"/></button></div><div className="mt-4 space-y-3"><input value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} dir="ltr" placeholder="admin@email.com" className="w-full border rounded-xl px-3 py-2.5"/><input value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} type="password" dir="ltr" className="w-full border rounded-xl px-3 py-2.5"/>{loginError&&<p className="text-xs text-rose-500">{loginError}</p>}<button onClick={login} className="w-full bg-emerald-700 text-white rounded-xl py-3">{t("loginBtn")}</button></div></div></div>}
-
-{adminView&&<div className="fixed inset-0 bg-emerald-950 z-40 overflow-y-auto"><div className="max-w-md mx-auto p-6 text-white"><div className="flex justify-between"><h2 className="text-xl font-bold">{t("adminTitle")}</h2><div className="flex gap-2"><button onClick={()=>{auth.signOut();setAdminView(false)}} className="text-xs text-rose-300">{t("logoutBtn")}</button><button onClick={()=>setAdminView(false)}><X className="w-5 h-5"/></button></div></div><p className="text-sm text-emerald-300 mt-4">{t("allPharmaciesTab",{n:all.length})}</p><div className="space-y-2 mt-4">{all.map(ph=><div key={ph.id} className="bg-emerald-900 rounded-xl p-3 flex justify-between gap-2"><div><p className="font-medium">{ph.name}</p><p className="text-xs text-emerald-300">{ph.area}</p></div><button onClick={async()=>{try{if(typeof ph.id==="string")await db.collection("pharmacies_submitted").doc(ph.id).delete();else await db.collection("removed_pharmacies").doc(String(ph.id)).set({name:ph.name});setRemoved(x=>new Set(x).add(ph.id));}catch(e){}}} className="text-xs text-rose-300">{t("deleteFinal")}</button></div>)}</div></div></div>}
-</div>
+function tr(lang, key, vars = {}) {
+  let str = T[lang][key] || T.ar[key] || key;
+  Object.entries(vars).forEach(([k, v]) => { str = str.replace(`{${k}}`, v); });
+  return str;
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<PharmacyFinder/>);
+function useNow() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(t);
+  }, []);
+  return now;
+}
+
+function computeStatus(ph, now) {
+  const hour = now.getHours() + now.getMinutes() / 60;
+  if (ph.onDuty) return { open: true, kind: "onDuty" };
+  const { open, close } = ph.hours;
+  const isOpen = close > 24 ? hour >= open || hour < close - 24 : hour >= open && hour < close;
+  return { open: isOpen, kind: isOpen ? "closesAt" : "opensAt", time: isOpen ? close % 24 : open };
+}
+
+function fmtHour(h) {
+  const hh = Math.floor(h) % 24;
+  const mm = Math.round((h - Math.floor(h)) * 60);
+  return String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+}
+
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+const DEFAULT_LOC = { lat: 35.1917, lng: -0.6355 };
+const COMPLAINT_THRESHOLD = 3;
+const ADMIN_PASSCODE = "Midou1987";
+
+function PharmacyFinder() {
+  const now = useNow();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [selected, setSelected] = useState(null);
+  const [complaints, setComplaints] = useState(() => Object.fromEntries(RAW_PHARMACIES.map((p) => [p.id, p.complaints])));
+  const [reportedByMe, setReportedByMe] = useState(() => new Set());
+  const [showReview, setShowReview] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [adminView, setAdminView] = useState(false);
+  const [adminAuthed, setAdminAuthed] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminPasscodeInput, setAdminPasscodeInput] = useState("");
+  const [adminError, setAdminError] = useState(false);
+  const [showJoinForm, setShowJoinForm] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [joinedPharmacies, setJoinedPharmacies] = useState([]);
+  const [joinForm, setJoinForm] = useState({ name: "", area: "", address: "", phone: "", open: "08:00", close: "21:00" });
+  const nextJoinId = () => 1000 + pendingRequests.length + joinedPharmacies.length + 1;
+  const [removedIds, setRemovedIds] = useState(() => new Set());
+  const [lang, setLang] = useState("ar");
+  const [wilayaId, setWilayaId] = useState(22);
+  const [communeId, setCommuneId] = useState(1);
+  const [wilayaOpen, setWilayaOpen] = useState(false);
+  const [favorites, setFavorites] = useState(() => new Set());
+  const [ratings, setRatings] = useState(() => Object.fromEntries(RAW_PHARMACIES.map((p) => [p.id, { sum: p.ratingSum, count: p.ratingCount }])));
+  const [myReviews, setMyReviews] = useState({});
+  const [draftStars, setDraftStars] = useState(0);
+  const [draftText, setDraftText] = useState("");
+  const [userLoc, setUserLoc] = useState(DEFAULT_LOC);
+  const dir = lang === "ar" ? "rtl" : "ltr";
+  const wilaya = WILAYAS.find((w) => w.id === wilayaId);
+  const commune = COMMUNES.find((c) => c.id === communeId);
+  const t = (key, vars) => tr(lang, key, vars);
+  const statusLabel = (status) => status.kind === "onDuty" ? t("onDutyLabel") : t(status.kind, { time: fmtHour(status.time) });
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { timeout: 8000 }
+    );
+  }, []);
+
+  useEffect(() => {
+    if (selected) {
+      const mine = myReviews[selected.id];
+      setDraftStars(mine ? mine.stars : 0);
+      setDraftText(mine ? mine.text : "");
+    }
+  }, [selected && selected.id]);
+
+  const selectWilaya = (w) => {
+    if (!w.enabled) {
+      setToast(t("wilayaComingSoonToast", { name: w.name }));
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setWilayaId(w.id);
+  };
+
+  const selectCommune = (c) => {
+    setWilayaOpen(false);
+    if (!c.enabled) {
+      setToast(t("wilayaComingSoonToast", { name: c.name }));
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setCommuneId(c.id);
+  };
+
+  const dismissComplaints = (id, name) => {
+    setComplaints((prev) => ({ ...prev, [id]: 0 }));
+    setToast(t("dismissedToast", { name }));
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const toggleFavorite = (id, name) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); setToast(t("removedFavorite", { name })); }
+      else { next.add(id); setToast(t("addedFavorite", { name })); }
+      return next;
+    });
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const submitRating = (id) => {
+    if (draftStars === 0) {
+      setToast(t("pickStarsFirst"));
+      setTimeout(() => setToast(null), 2500);
+      return;
+    }
+    setRatings((prev) => {
+      const cur = prev[id] || { sum: 0, count: 0 };
+      const already = myReviews[id];
+      const sum = already ? cur.sum - already.stars + draftStars : cur.sum + draftStars;
+      const count = already ? cur.count : cur.count + 1;
+      return { ...prev, [id]: { sum, count } };
+    });
+    setMyReviews((prev) => ({ ...prev, [id]: { stars: draftStars, text: draftText } }));
+    setToast(t("reviewSubmitted"));
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const checkAdminPasscode = () => {
+    if (adminPasscodeInput === ADMIN_PASSCODE) {
+      setAdminAuthed(true);
+      setShowAdminLogin(false);
+      setAdminPasscodeInput("");
+      setAdminError(false);
+      setAdminView(true);
+    } else {
+      setAdminError(true);
+    }
+  };
+
+  const submitJoinRequest = () => {
+    if (!joinForm.name.trim() || !joinForm.phone.trim()) {
+      setToast(t("joinFillRequired"));
+      setTimeout(() => setToast(null), 2500);
+      return;
+    }
+    const [oh, om] = joinForm.open.split(":").map(Number);
+    const [ch, cm] = joinForm.close.split(":").map(Number);
+    const req = {
+      id: nextJoinId(),
+      name: joinForm.name.trim(),
+      area: joinForm.area.trim() || t("wilayaLabel"),
+      address: joinForm.address.trim(),
+      phone: joinForm.phone.trim(),
+      lat: userLoc.lat + (Math.random() - 0.5) * 0.01,
+      lng: userLoc.lng + (Math.random() - 0.5) * 0.01,
+      hours: { open: oh + om / 60, close: ch + cm / 60 },
+      onDuty: false,
+      complaints: 0,
+      ratingSum: 0,
+      ratingCount: 0,
+    };
+    setPendingRequests((prev) => [...prev, req]);
+    setJoinForm({ name: "", area: "", address: "", phone: "", open: "08:00", close: "21:00" });
+    setShowJoinForm(false);
+    setToast(t("joinSubmitted"));
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const approveRequest = (id) => {
+    const req = pendingRequests.find((r) => r.id === id);
+    if (!req) return;
+    setJoinedPharmacies((prev) => [...prev, req]);
+    setPendingRequests((prev) => prev.filter((r) => r.id !== id));
+    setToast(t("joinApproved", { name: req.name }));
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const rejectRequest = (id) => {
+    const req = pendingRequests.find((r) => r.id === id);
+    setPendingRequests((prev) => prev.filter((r) => r.id !== id));
+    setToast(t("joinRejected", { name: req ? req.name : "" }));
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const removePermanently = (id, name) => {
+    setRemovedIds((prev) => new Set(prev).add(id));
+    setToast(t("removedToast", { name }));
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const reportPharmacy = (id, name) => {
+    if (reportedByMe.has(id)) { setToast(t("alreadyReported")); return; }
+    setComplaints((prev) => {
+      const next = { ...prev, [id]: (prev[id] || 0) + 1 };
+      setToast(next[id] === COMPLAINT_THRESHOLD ? t("thresholdReached", { n: COMPLAINT_THRESHOLD, name }) : t("thanksReport"));
+      return next;
+    });
+    setReportedByMe((prev) => new Set(prev).add(id));
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const allComputed = useMemo(() => {
+    return [...RAW_PHARMACIES, ...joinedPharmacies].filter((ph) => !removedIds.has(ph.id)).map((ph) => {
+      const status = computeStatus(ph, now);
+      const distance = haversine(userLoc.lat, userLoc.lng, ph.lat, ph.lng);
+      const complaintCount = complaints[ph.id] || 0;
+      const r = ratings[ph.id] || { sum: 0, count: 0 };
+      return {
+        ...ph, status, distance, complaintCount,
+        underReview: complaintCount >= COMPLAINT_THRESHOLD,
+        avgRating: r.count > 0 ? r.sum / r.count : null,
+        ratingCount: r.count,
+        isFavorite: favorites.has(ph.id),
+      };
+    });
+  }, [now, complaints, removedIds, ratings, favorites, userLoc, joinedPharmacies]);
+
+  const selectedLive = selected ? allComputed.find((p) => p.id === selected.id) || selected : null;
+
+  const list = useMemo(() => {
+    return allComputed
+      .filter((ph) => (ph.name + ph.area + ph.address).toLowerCase().includes(query.toLowerCase()))
+      .filter((ph) => (filter === "open" ? ph.status.open : true))
+      .filter((ph) => (filter === "urgent" ? ph.onDuty : true))
+      .filter((ph) => (filter === "favorites" ? ph.isFavorite : true))
+      .filter((ph) => (showReview ? true : !ph.underReview))
+      .sort((a, b) => a.distance - b.distance);
+  }, [allComputed, query, filter, showReview]);
+
+  const reviewQueue = useMemo(() => {
+    return RAW_PHARMACIES.filter((ph) => !removedIds.has(ph.id))
+      .map((ph) => ({ ...ph, complaintCount: complaints[ph.id] || 0 }))
+      .filter((ph) => ph.complaintCount >= COMPLAINT_THRESHOLD)
+      .sort((a, b) => b.complaintCount - a.complaintCount);
+  }, [complaints, removedIds]);
+
+  const reviewCount = Object.values(complaints).filter((c) => c >= COMPLAINT_THRESHOLD).length;
+  const openCount = list.filter((p) => p.status.open).length;
+  const localeMap = { ar: "ar-DZ", fr: "fr-DZ", en: "en-GB" };
+  const timeStr = now.toLocaleTimeString(localeMap[lang], { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div dir={dir} className="min-h-screen bg-emerald-50 text-stone-900" style={{ fontFamily: lang === "ar" ? "'IBM Plex Sans Arabic', sans-serif" : "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}>
+      <header className="sticky top-0 z-20 bg-emerald-950 text-emerald-50 px-5 pt-4 pb-5 rounded-b-2xl shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-md bg-emerald-700 flex items-center justify-center flex-shrink-0 shadow-md">
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="#F0F4F1">
+                <path d="M12 21s-6-5.686-6-10a6 6 0 1112 0c0 4.314-6 10-6 10z" />
+                <g transform="translate(12,8.6) rotate(-35)">
+                  <rect x="-3.4" y="-1.5" width="6.8" height="3" rx="1.5" fill="#10B981" />
+                  <path d="M0 -1.5 H1.9 A1.5 1.5 0 0 1 1.9 1.5 H0 Z" fill="#FB9260" />
+                  <rect x="-0.15" y="-1.5" width="0.3" height="3" fill="#F0F4F1" />
+                </g>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-emerald-400 leading-tight" dir="ltr">Pharis</h1>
+              <p className="text-xs text-emerald-300">{commune.name}</p>
+            </div>
+          </div>
+          <div className="text-left flex items-center gap-1.5">
+            <button onClick={() => (adminAuthed ? setAdminView(true) : setShowAdminLogin(true))} className="mono text-emerald-400 text-[10px] border border-emerald-800 rounded-md px-2 py-1 hover:bg-emerald-900 transition">{t("dashboard")}</button>
+            <div className="mono text-emerald-400 text-xs border border-emerald-800 rounded-md px-2 py-1">{timeStr}</div>
+          </div>
+        </div>
+
+        <button onClick={() => setShowJoinForm(true)}
+          className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-medium text-emerald-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg px-3 py-2 transition">
+          {t("joinBanner")} \u2192
+        </button>
+
+        <button onClick={() => setWilayaOpen((s) => !s)}
+          className={`mt-3 w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 border transition ${wilayaOpen ? "bg-emerald-500 border-emerald-400 text-emerald-950" : "bg-emerald-900 border-emerald-700 text-emerald-100 hover:bg-emerald-800"}`}>
+          <span className="flex items-center gap-2 text-sm font-medium"><MapPin className="w-4 h-4" />{t("tagline", { wilaya: commune.name })}</span>
+          <span className={`text-xs font-semibold underline ${wilayaOpen ? "text-emerald-950" : "text-emerald-300"}`}>{t("changeWilaya")}</span>
+        </button>
+
+        <div className="flex gap-1.5 mt-2">
+          {[{ code: "ar", label: "العربية" }, { code: "fr", label: "Français" }, { code: "en", label: "English" }].map((l) => (
+            <button key={l.code} onClick={() => setLang(l.code)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition ${lang === l.code ? "bg-emerald-400 text-emerald-950" : "bg-emerald-900 text-emerald-300"}`}>
+              {l.label}
+            </button>
+          ))}
+        </div>
+
+        {wilayaOpen && (
+          <div className="mt-3 bg-emerald-950 rounded-2xl p-3 max-h-80 overflow-y-auto border border-emerald-800 space-y-3">
+            <div>
+              <p className="text-xs text-emerald-300 px-1 pb-2">{t("wilayaLabel")}</p>
+              <div className="grid grid-cols-2 gap-1">
+                {WILAYAS.map((w) => (
+                  <button key={w.id} onClick={() => selectWilaya(w)}
+                    className={`text-right text-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-1 transition ${w.id === wilayaId ? "bg-emerald-500 text-emerald-950 font-medium" : w.enabled ? "text-emerald-200 hover:bg-emerald-900" : "text-emerald-600"}`}>
+                    <span className="truncate">{w.name}</span>
+                    {!w.enabled && <span className="text-[9px] flex-shrink-0 opacity-70">{t("comingSoon")}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="pt-3 border-t border-emerald-800">
+              <p className="text-xs text-emerald-300 px-1 pb-2">{t("communeLabel")}</p>
+              <div className="grid grid-cols-2 gap-1">
+                {COMMUNES.map((c) => (
+                  <button key={c.id} onClick={() => selectCommune(c)}
+                    className={`text-right text-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-1 transition ${c.id === communeId ? "bg-emerald-500 text-emerald-950 font-medium" : c.enabled ? "text-emerald-200 hover:bg-emerald-900" : "text-emerald-600"}`}>
+                    <span className="truncate">{c.name}</span>
+                    {!c.enabled && <span className="text-[9px] flex-shrink-0 opacity-70">{t("comingSoon")}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-3 flex items-baseline gap-2">
+          <span className="text-3xl font-bold mono text-emerald-400">{openCount}</span>
+          <span className="text-xs text-emerald-200">{t("openStat", { total: list.length })}</span>
+        </div>
+
+        <div className="mt-3 relative">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("searchPlaceholder")}
+            className="w-full bg-emerald-900 placeholder-stone-500 text-emerald-50 rounded-xl pr-10 pl-4 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition" />
+        </div>
+
+        <div className="flex gap-2 mt-2 flex-wrap">
+          <button onClick={() => setFilter("all")} className={`px-3 py-1 rounded-full text-xs font-medium transition ${filter === "all" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-200"}`}>{t("filterAll")}</button>
+          <button onClick={() => setFilter("urgent")} className={`px-3 py-1 rounded-full text-xs font-bold transition ${filter === "urgent" ? "bg-rose-500 text-white" : "bg-rose-950 text-rose-300"}`}>{t("filterUrgent")}</button>
+          <button onClick={() => setFilter("open")} className={`px-3 py-1 rounded-full text-xs font-medium transition ${filter === "open" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-200"}`}>{t("filterOpen")}</button>
+          <button onClick={() => setFilter("favorites")} className={`px-3 py-1 rounded-full text-xs font-medium transition flex items-center gap-1 ${filter === "favorites" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-200"}`}>
+            <Heart className="w-3 h-3" fill={filter === "favorites" ? "currentColor" : "none"} />{t("filterFavorites")}
+          </button>
+          {reviewCount > 0 && (
+            <button onClick={() => setShowReview((s) => !s)} className={`mr-auto px-2.5 py-1 rounded-full text-xs font-medium transition flex items-center gap-1 ${showReview ? "bg-rose-500 text-white" : "bg-emerald-900 text-rose-300"}`}>
+              <AlertTriangle className="w-3 h-3" />{t("reviewBtn", { n: reviewCount })}
+            </button>
+          )}
+        </div>
+      </header>
+
+      {toast && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-emerald-950 text-emerald-50 text-sm px-4 py-2.5 rounded-full shadow-lg max-w-[90%] text-center">{toast}</div>}
+
+      <main className="px-5 py-5 space-y-3 max-w-md mx-auto">
+        {list.length === 0 && <p className="text-center text-stone-500 mt-10">{filter === "favorites" ? t("noFavorites") : t("noResults")}</p>}
+        {list.map((ph) => (
+          <div key={ph.id} className={`w-full bg-white rounded-2xl p-4 shadow-sm border transition ${ph.underReview ? "border-rose-300 bg-rose-50" : "border-stone-200 hover:shadow-md"}`}>
+            {ph.underReview && (
+              <div className="flex items-center gap-1.5 text-xs font-medium text-rose-500 mb-2 bg-rose-50 rounded-lg px-2.5 py-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />{t("underReviewBanner", { n: ph.complaintCount })}
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <button onClick={() => setSelected(ph)} className="flex-1 min-w-0 text-right flex items-center gap-3">
+                <div className={`relative w-3 h-3 rounded-full pulse-dot flex-shrink-0 ${ph.status.open ? "text-emerald-500 bg-emerald-500" : "text-rose-500 bg-rose-500"}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-stone-900 truncate">{ph.name}</h3>
+                    <span className="mono text-xs text-stone-500 flex-shrink-0 mr-2">{ph.distance.toFixed(1)} {lang === "ar" ? "كم" : "km"}</span>
+                  </div>
+                  <p className="text-xs text-stone-500 mt-0.5">{ph.area} · {ph.address}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className={`text-xs font-medium ${ph.status.open ? "text-emerald-700" : "text-rose-500"}`}>
+                      {ph.status.open ? t("openNow") : t("closedNow")} · {statusLabel(ph.status)}
+                    </p>
+                    {ph.avgRating !== null && (
+                      <span className="flex items-center gap-0.5 text-xs text-amber-600 flex-shrink-0 mr-2">
+                        <Star className="w-3 h-3" fill="currentColor" />{ph.avgRating.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+              <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                <button onClick={() => toggleFavorite(ph.id, ph.name)} title={t("filterFavorites")}
+                  className={`p-2 rounded-full transition ${ph.isFavorite ? "text-rose-500" : "text-stone-400 hover:bg-rose-50 hover:text-rose-500"}`}>
+                  <Heart className="w-4 h-4" fill={ph.isFavorite ? "currentColor" : "none"} />
+                </button>
+                <button onClick={() => reportPharmacy(ph.id, ph.name)} title={t("reportTitle")} className="p-2 rounded-full text-stone-400 hover:bg-rose-50 hover:text-rose-500 transition">
+                  <Flag className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </main>
+
+      {showJoinForm && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setShowJoinForm(false)}>
+          <div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim overflow-y-auto" style={{maxHeight: "85vh"}} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <h2 className="text-xl font-bold">{t("joinTitle")}</h2>
+              <button onClick={() => setShowJoinForm(false)} className="text-stone-500 p-1"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs text-stone-500">{t("joinName")}</label>
+                <input value={joinForm.name} onChange={(e) => setJoinForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500">{t("joinArea")}</label>
+                <input value={joinForm.area} onChange={(e) => setJoinForm((f) => ({ ...f, area: e.target.value }))}
+                  className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500">{t("joinAddress")}</label>
+                <input value={joinForm.address} onChange={(e) => setJoinForm((f) => ({ ...f, address: e.target.value }))}
+                  className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500">{t("joinPhone")}</label>
+                <input value={joinForm.phone} onChange={(e) => setJoinForm((f) => ({ ...f, phone: e.target.value }))} dir="ltr"
+                  className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="text-xs text-stone-500">{t("joinOpen")}</label>
+                  <input type="time" value={joinForm.open} onChange={(e) => setJoinForm((f) => ({ ...f, open: e.target.value }))}
+                    className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs text-stone-500">{t("joinClose")}</label>
+                  <input type="time" value={joinForm.close} onChange={(e) => setJoinForm((f) => ({ ...f, close: e.target.value }))}
+                    className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={submitJoinRequest} className="flex-1 bg-emerald-700 text-emerald-50 rounded-xl py-3 font-medium">{t("joinSubmit")}</button>
+              <button onClick={() => setShowJoinForm(false)} className="px-4 rounded-xl border border-stone-200 text-stone-600">{t("joinCancel")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selected && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setSelected(null)}>
+          <div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-bold">{selectedLive.name}</h2>
+                <p className="text-sm text-stone-500 mt-0.5">{selectedLive.area}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => toggleFavorite(selectedLive.id, selectedLive.name)} className={selectedLive.isFavorite ? "text-rose-500 p-1" : "text-stone-400 p-1"}>
+                  <Heart className="w-5 h-5" fill={selectedLive.isFavorite ? "currentColor" : "none"} />
+                </button>
+                <button onClick={() => setSelected(null)} className="text-stone-500 p-1"><X className="w-5 h-5" /></button>
+              </div>
+            </div>
+            <div className={`inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-sm font-medium ${selectedLive.status.open ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-500"}`}>
+              <span className={`w-2 h-2 rounded-full ${selectedLive.status.open ? "bg-emerald-500" : "bg-rose-500"}`} />
+              {selectedLive.status.open ? t("openNow") : t("closedNowFull")}
+            </div>
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="flex items-center gap-2 text-stone-900"><MapPin className="w-4 h-4 text-stone-500" />{selectedLive.address}</div>
+              <div className="flex items-center gap-2 text-stone-900 mono"><Navigation className="w-4 h-4 text-stone-500" />{selectedLive.distance.toFixed(1)} {lang === "ar" ? "كم عنك" : "km away"}</div>
+              <div className="flex items-center gap-2 text-stone-900"><Clock className="w-4 h-4 text-stone-500" />{statusLabel(selectedLive.status)}</div>
+              {selectedLive.phone && <div className="flex items-center gap-2 text-stone-900 mono"><Phone className="w-4 h-4 text-stone-500" /><span dir="ltr">{selectedLive.phone}</span></div>}
+            </div>
+            {selectedLive.underReview && (
+              <div className="flex items-start gap-2 text-xs text-rose-500 mt-4 bg-rose-50 rounded-lg px-3 py-2.5">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />{t("underReviewDetail", { n: selectedLive.complaintCount })}
+              </div>
+            )}
+
+            <div className="mt-5 pt-4 border-t border-stone-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-stone-900">{t("reviewsTitle")}</h3>
+                {selectedLive.avgRating !== null ? (
+                  <span className="flex items-center gap-1 text-sm text-amber-600">
+                    <Star className="w-4 h-4" fill="currentColor" />{selectedLive.avgRating.toFixed(1)}
+                    <span className="text-stone-400 text-xs">{t("ratingsCount", { n: selectedLive.ratingCount })}</span>
+                  </span>
+                ) : <span className="text-xs text-stone-400">{t("noRatingsYet")}</span>}
+              </div>
+              <p className="text-xs text-stone-500 mt-3 mb-1.5">{t("yourRating")}</p>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} onClick={() => setDraftStars(n)} className="p-0.5">
+                    <Star className={`w-6 h-6 ${n <= draftStars ? "text-amber-500" : "text-stone-200"}`} fill={n <= draftStars ? "currentColor" : "none"} />
+                  </button>
+                ))}
+              </div>
+              <textarea value={draftText} onChange={(e) => setDraftText(e.target.value)} placeholder={t("reviewPlaceholder")} rows={2}
+                className="w-full mt-2 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500 transition resize-none" />
+              <button onClick={() => submitRating(selectedLive.id)} className="mt-2 w-full bg-emerald-700 text-emerald-50 rounded-xl py-2 text-sm font-medium">{t("submitReview")}</button>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${selectedLive.lat},${selectedLive.lng}`} target="_blank" rel="noopener noreferrer"
+                className="flex-1 bg-emerald-950 text-emerald-50 rounded-xl py-3 font-medium text-center">{t("directions")}</a>
+              <button onClick={() => reportPharmacy(selectedLive.id, selectedLive.name)} className="px-4 rounded-xl border border-stone-200 text-rose-500 flex items-center justify-center" title={t("reportTitle")}>
+                <Flag className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAdminLogin && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40 px-6"
+          onClick={() => { setShowAdminLogin(false); setAdminError(false); setAdminPasscodeInput(""); }}>
+          <div className="bg-white w-full max-w-sm rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-stone-900">{t("adminLoginTitle")}</h2>
+            <input type="password" value={adminPasscodeInput}
+              onChange={(e) => { setAdminPasscodeInput(e.target.value); setAdminError(false); }}
+              onKeyDown={(e) => e.key === "Enter" && checkAdminPasscode()}
+              placeholder={t("adminPasscodePlaceholder")} dir="ltr" autoFocus
+              className={`w-full mt-4 text-sm border rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500 ${adminError ? "border-rose-400" : "border-stone-200"}`} />
+            {adminError && <p className="text-xs text-rose-500 mt-1.5">{t("adminWrongPasscode")}</p>}
+            <button onClick={checkAdminPasscode} className="w-full mt-4 bg-emerald-950 text-emerald-50 rounded-xl py-2.5 font-medium text-sm">{t("adminLoginBtn")}</button>
+          </div>
+        </div>
+      )}
+
+      {adminView && (
+        <div className="fixed inset-0 bg-emerald-950 z-40 overflow-y-auto">
+          <div className="max-w-md mx-auto px-5 py-6">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-xl font-bold text-emerald-50">{t("adminTitle")}</h2>
+              <button onClick={() => setAdminView(false)} className="text-emerald-400 p-1"><X className="w-5 h-5" /></button>
+            </div>
+
+            <div className="mt-4 mb-6">
+              <h3 className="text-sm font-semibold text-emerald-50">{t("joinRequestsTitle")} {pendingRequests.length > 0 && `(${pendingRequests.length})`}</h3>
+              {pendingRequests.length === 0 ? (
+                <p className="text-xs text-emerald-500 mt-2">{t("joinRequestsEmpty")}</p>
+              ) : (
+                <div className="space-y-3 mt-3">
+                  {pendingRequests.map((req) => (
+                    <div key={req.id} className="bg-emerald-900 rounded-2xl p-4 border border-emerald-700">
+                      <h4 className="font-semibold text-emerald-50">{req.name}</h4>
+                      <p className="text-xs text-emerald-300 mt-0.5">{req.area} · {req.address}</p>
+                      {req.phone && <p className="text-xs text-emerald-300 mt-0.5 mono" dir="ltr">{req.phone}</p>}
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => approveRequest(req.id)} className="flex-1 bg-emerald-500 text-emerald-950 text-sm font-medium rounded-lg py-2">{t("joinApprove")}</button>
+                        <button onClick={() => rejectRequest(req.id)} className="flex-1 bg-rose-950 text-rose-300 text-sm font-medium rounded-lg py-2">{t("joinReject")}</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <p className="text-sm text-emerald-300 mb-6 pt-4 border-t border-emerald-800">{t("adminSubtitle", { n: COMPLAINT_THRESHOLD })}</p>
+            {reviewQueue.length === 0 && <div className="text-center text-emerald-600 mt-16 text-sm">{t("adminEmpty")}</div>}
+            <div className="space-y-3">
+              {reviewQueue.map((ph) => (
+                <div key={ph.id} className="bg-emerald-950 rounded-2xl p-4 border border-emerald-800">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold text-emerald-50">{ph.name}</h3>
+                      <p className="text-xs text-emerald-300 mt-0.5">{ph.area} · {ph.address}</p>
+                      {ph.phone && <p className="text-xs text-emerald-300 mt-0.5 mono" dir="ltr">{ph.phone}</p>}
+                    </div>
+                    <div className="flex items-center gap-1 bg-rose-950 text-rose-300 text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0">
+                      <AlertTriangle className="w-3 h-3" />{ph.complaintCount}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <button onClick={() => dismissComplaints(ph.id, ph.name)} className="flex-1 bg-emerald-900 text-emerald-400 text-sm font-medium rounded-lg py-2.5">{t("verifyReturn")}</button>
+                    <button onClick={() => removePermanently(ph.id, ph.name)} className="flex-1 bg-rose-950 text-rose-300 text-sm font-medium rounded-lg py-2.5">{t("deleteFinal")}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<PharmacyFinder />);
+document.getElementById("root").dataset.mounted = "true";
 </script>
 
 <script>
-if ("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("service-worker.js").catch(() => {});
+    });
+  }
 </script>
 </body>
 </html>
