@@ -1,4 +1,4 @@
-const CACHE_NAME = "pharis-v8";
+const CACHE_NAME = "pharis-v10";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (event) => {
