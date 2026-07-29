@@ -181,6 +181,16 @@ const T = {
     dismissedToast: 'تمت إعادة "{name}" للقائمة العادية ومسح الشكاوى عنها.',
     removedToast: 'تم حذف "{name}" نهائياً من التطبيق.',
     wilayaComingSoonToast: '{name} — لا توجد بيانات بعد، قريباً إن شاء الله.',
+    joinBanner: "صاحب صيدلية؟ سجّل صيدليتك بالتطبيق مجاناً",
+    joinTitle: "تسجيل صيدلية جديدة",
+    joinName: "اسم الصيدلية *", joinArea: "الحي / المنطقة", joinAddress: "العنوان بالتفصيل", joinPhone: "رقم الهاتف *",
+    joinOpen: "وقت الفتح", joinClose: "وقت الإغلاق", joinSubmit: "إرسال الطلب", joinCancel: "إلغاء",
+    joinFillRequired: "الرجاء إدخال اسم الصيدلية ورقم الهاتف على الأقل.",
+    joinSubmitted: "تم إرسال طلبك بنجاح! سيتم مراجعته من الإدارة قريباً.",
+    joinApproved: 'تم قبول "{name}" وإضافتها للتطبيق.', joinRejected: 'تم رفض طلب "{name}".',
+    joinRequestsTitle: "طلبات انضمام الصيدليات", joinRequestsEmpty: "لا توجد طلبات انضمام حالياً.",
+    joinApprove: "قبول", joinReject: "رفض",
+    adminLoginTitle: "دخول لوحة التحكم", adminPasscodePlaceholder: "كلمة السر", adminLoginBtn: "دخول", adminWrongPasscode: "كلمة السر غير صحيحة.",
   },
   fr: {
     tagline: "Pharmacies de {wilaya}, en direct", dashboard: "Tableau de bord",
@@ -209,6 +219,16 @@ const T = {
     dismissedToast: '"{name}" a été remise en ligne et ses signalements effacés.',
     removedToast: '"{name}" a été définitivement supprimée de l\'application.',
     wilayaComingSoonToast: '{name} — pas encore de données, bientôt disponible.',
+    joinBanner: "Vous êtes pharmacien ? Inscrivez votre pharmacie gratuitement",
+    joinTitle: "Inscription d'une nouvelle pharmacie",
+    joinName: "Nom de la pharmacie *", joinArea: "Quartier / zone", joinAddress: "Adresse détaillée", joinPhone: "Numéro de téléphone *",
+    joinOpen: "Heure d'ouverture", joinClose: "Heure de fermeture", joinSubmit: "Envoyer la demande", joinCancel: "Annuler",
+    joinFillRequired: "Merci de renseigner au moins le nom et le téléphone.",
+    joinSubmitted: "Demande envoyée ! Elle sera examinée par l'administration prochainement.",
+    joinApproved: '"{name}" a été approuvée et ajoutée à l\'application.', joinRejected: 'La demande de "{name}" a été refusée.',
+    joinRequestsTitle: "Demandes d'adhésion des pharmacies", joinRequestsEmpty: "Aucune demande d'adhésion pour le moment.",
+    joinApprove: "Approuver", joinReject: "Refuser",
+    adminLoginTitle: "Accès au tableau de bord", adminPasscodePlaceholder: "Mot de passe", adminLoginBtn: "Entrer", adminWrongPasscode: "Mot de passe incorrect.",
   },
   en: {
     tagline: "{wilaya} pharmacies, live", dashboard: "Dashboard",
@@ -237,6 +257,16 @@ const T = {
     dismissedToast: '"{name}" was restored to the listing and its complaints cleared.',
     removedToast: '"{name}" was permanently removed from the app.',
     wilayaComingSoonToast: '{name} — no data yet, coming soon.',
+    joinBanner: "Own a pharmacy? Register it on the app for free",
+    joinTitle: "Register a new pharmacy",
+    joinName: "Pharmacy name *", joinArea: "Neighborhood / area", joinAddress: "Detailed address", joinPhone: "Phone number *",
+    joinOpen: "Opening time", joinClose: "Closing time", joinSubmit: "Submit request", joinCancel: "Cancel",
+    joinFillRequired: "Please enter at least the name and phone number.",
+    joinSubmitted: "Request submitted! It will be reviewed by the admin soon.",
+    joinApproved: '"{name}" was approved and added to the app.', joinRejected: 'The request for "{name}" was rejected.',
+    joinRequestsTitle: "Pharmacy join requests", joinRequestsEmpty: "No join requests right now.",
+    joinApprove: "Approve", joinReject: "Reject",
+    adminLoginTitle: "Dashboard access", adminPasscodePlaceholder: "Passcode", adminLoginBtn: "Enter", adminWrongPasscode: "Incorrect passcode.",
   },
 };
 
@@ -279,6 +309,7 @@ function haversine(lat1, lng1, lat2, lng2) {
 
 const DEFAULT_LOC = { lat: 35.1917, lng: -0.6355 };
 const COMPLAINT_THRESHOLD = 3;
+const ADMIN_PASSCODE = "Midou1987";
 
 function PharmacyFinder() {
   const now = useNow();
@@ -290,6 +321,15 @@ function PharmacyFinder() {
   const [showReview, setShowReview] = useState(false);
   const [toast, setToast] = useState(null);
   const [adminView, setAdminView] = useState(false);
+  const [adminAuthed, setAdminAuthed] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminPasscodeInput, setAdminPasscodeInput] = useState("");
+  const [adminError, setAdminError] = useState(false);
+  const [showJoinForm, setShowJoinForm] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [joinedPharmacies, setJoinedPharmacies] = useState([]);
+  const [joinForm, setJoinForm] = useState({ name: "", area: "", address: "", phone: "", open: "08:00", close: "21:00" });
+  const nextJoinId = () => 1000 + pendingRequests.length + joinedPharmacies.length + 1;
   const [removedIds, setRemovedIds] = useState(() => new Set());
   const [lang, setLang] = useState("ar");
   const [wilayaId, setWilayaId] = useState(22);
@@ -377,6 +417,63 @@ function PharmacyFinder() {
     setTimeout(() => setToast(null), 2500);
   };
 
+  const checkAdminPasscode = () => {
+    if (adminPasscodeInput === ADMIN_PASSCODE) {
+      setAdminAuthed(true);
+      setShowAdminLogin(false);
+      setAdminPasscodeInput("");
+      setAdminError(false);
+      setAdminView(true);
+    } else {
+      setAdminError(true);
+    }
+  };
+
+  const submitJoinRequest = () => {
+    if (!joinForm.name.trim() || !joinForm.phone.trim()) {
+      setToast(t("joinFillRequired"));
+      setTimeout(() => setToast(null), 2500);
+      return;
+    }
+    const [oh, om] = joinForm.open.split(":").map(Number);
+    const [ch, cm] = joinForm.close.split(":").map(Number);
+    const req = {
+      id: nextJoinId(),
+      name: joinForm.name.trim(),
+      area: joinForm.area.trim() || t("wilayaLabel"),
+      address: joinForm.address.trim(),
+      phone: joinForm.phone.trim(),
+      lat: userLoc.lat + (Math.random() - 0.5) * 0.01,
+      lng: userLoc.lng + (Math.random() - 0.5) * 0.01,
+      hours: { open: oh + om / 60, close: ch + cm / 60 },
+      onDuty: false,
+      complaints: 0,
+      ratingSum: 0,
+      ratingCount: 0,
+    };
+    setPendingRequests((prev) => [...prev, req]);
+    setJoinForm({ name: "", area: "", address: "", phone: "", open: "08:00", close: "21:00" });
+    setShowJoinForm(false);
+    setToast(t("joinSubmitted"));
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const approveRequest = (id) => {
+    const req = pendingRequests.find((r) => r.id === id);
+    if (!req) return;
+    setJoinedPharmacies((prev) => [...prev, req]);
+    setPendingRequests((prev) => prev.filter((r) => r.id !== id));
+    setToast(t("joinApproved", { name: req.name }));
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const rejectRequest = (id) => {
+    const req = pendingRequests.find((r) => r.id === id);
+    setPendingRequests((prev) => prev.filter((r) => r.id !== id));
+    setToast(t("joinRejected", { name: req ? req.name : "" }));
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const removePermanently = (id, name) => {
     setRemovedIds((prev) => new Set(prev).add(id));
     setToast(t("removedToast", { name }));
@@ -395,7 +492,7 @@ function PharmacyFinder() {
   };
 
   const allComputed = useMemo(() => {
-    return RAW_PHARMACIES.filter((ph) => !removedIds.has(ph.id)).map((ph) => {
+    return [...RAW_PHARMACIES, ...joinedPharmacies].filter((ph) => !removedIds.has(ph.id)).map((ph) => {
       const status = computeStatus(ph, now);
       const distance = haversine(userLoc.lat, userLoc.lng, ph.lat, ph.lng);
       const complaintCount = complaints[ph.id] || 0;
@@ -408,7 +505,7 @@ function PharmacyFinder() {
         isFavorite: favorites.has(ph.id),
       };
     });
-  }, [now, complaints, removedIds, ratings, favorites, userLoc]);
+  }, [now, complaints, removedIds, ratings, favorites, userLoc, joinedPharmacies]);
 
   const selectedLive = selected ? allComputed.find((p) => p.id === selected.id) || selected : null;
 
@@ -448,10 +545,15 @@ function PharmacyFinder() {
             </div>
           </div>
           <div className="text-left flex items-center gap-1.5">
-            <button onClick={() => setAdminView(true)} className="mono text-emerald-400 text-[10px] border border-emerald-800 rounded-md px-2 py-1 hover:bg-emerald-900 transition">{t("dashboard")}</button>
+            <button onClick={() => (adminAuthed ? setAdminView(true) : setShowAdminLogin(true))} className="mono text-emerald-400 text-[10px] border border-emerald-800 rounded-md px-2 py-1 hover:bg-emerald-900 transition">{t("dashboard")}</button>
             <div className="mono text-emerald-400 text-xs border border-emerald-800 rounded-md px-2 py-1">{timeStr}</div>
           </div>
         </div>
+
+        <button onClick={() => setShowJoinForm(true)}
+          className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-medium text-emerald-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg px-3 py-2 transition">
+          {t("joinBanner")} \u2192
+        </button>
 
         <button onClick={() => setWilayaOpen((s) => !s)}
           className={`mt-3 w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 border transition ${wilayaOpen ? "bg-emerald-500 border-emerald-400 text-emerald-950" : "bg-emerald-900 border-emerald-700 text-emerald-100 hover:bg-emerald-800"}`}>
@@ -569,6 +671,55 @@ function PharmacyFinder() {
         ))}
       </main>
 
+      {showJoinForm && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setShowJoinForm(false)}>
+          <div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim overflow-y-auto" style={{maxHeight: "85vh"}} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <h2 className="text-xl font-bold">{t("joinTitle")}</h2>
+              <button onClick={() => setShowJoinForm(false)} className="text-stone-500 p-1"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs text-stone-500">{t("joinName")}</label>
+                <input value={joinForm.name} onChange={(e) => setJoinForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500">{t("joinArea")}</label>
+                <input value={joinForm.area} onChange={(e) => setJoinForm((f) => ({ ...f, area: e.target.value }))}
+                  className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500">{t("joinAddress")}</label>
+                <input value={joinForm.address} onChange={(e) => setJoinForm((f) => ({ ...f, address: e.target.value }))}
+                  className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500">{t("joinPhone")}</label>
+                <input value={joinForm.phone} onChange={(e) => setJoinForm((f) => ({ ...f, phone: e.target.value }))} dir="ltr"
+                  className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="text-xs text-stone-500">{t("joinOpen")}</label>
+                  <input type="time" value={joinForm.open} onChange={(e) => setJoinForm((f) => ({ ...f, open: e.target.value }))}
+                    className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs text-stone-500">{t("joinClose")}</label>
+                  <input type="time" value={joinForm.close} onChange={(e) => setJoinForm((f) => ({ ...f, close: e.target.value }))}
+                    className="w-full mt-1 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500" />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={submitJoinRequest} className="flex-1 bg-emerald-700 text-emerald-50 rounded-xl py-3 font-medium">{t("joinSubmit")}</button>
+              <button onClick={() => setShowJoinForm(false)} className="px-4 rounded-xl border border-stone-200 text-stone-600">{t("joinCancel")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selected && (
         <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setSelected(null)}>
           <div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim" onClick={(e) => e.stopPropagation()}>
@@ -634,6 +785,22 @@ function PharmacyFinder() {
         </div>
       )}
 
+      {showAdminLogin && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40 px-6"
+          onClick={() => { setShowAdminLogin(false); setAdminError(false); setAdminPasscodeInput(""); }}>
+          <div className="bg-white w-full max-w-sm rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-stone-900">{t("adminLoginTitle")}</h2>
+            <input type="password" value={adminPasscodeInput}
+              onChange={(e) => { setAdminPasscodeInput(e.target.value); setAdminError(false); }}
+              onKeyDown={(e) => e.key === "Enter" && checkAdminPasscode()}
+              placeholder={t("adminPasscodePlaceholder")} dir="ltr" autoFocus
+              className={`w-full mt-4 text-sm border rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500 ${adminError ? "border-rose-400" : "border-stone-200"}`} />
+            {adminError && <p className="text-xs text-rose-500 mt-1.5">{t("adminWrongPasscode")}</p>}
+            <button onClick={checkAdminPasscode} className="w-full mt-4 bg-emerald-950 text-emerald-50 rounded-xl py-2.5 font-medium text-sm">{t("adminLoginBtn")}</button>
+          </div>
+        </div>
+      )}
+
       {adminView && (
         <div className="fixed inset-0 bg-emerald-950 z-40 overflow-y-auto">
           <div className="max-w-md mx-auto px-5 py-6">
@@ -641,7 +808,29 @@ function PharmacyFinder() {
               <h2 className="text-xl font-bold text-emerald-50">{t("adminTitle")}</h2>
               <button onClick={() => setAdminView(false)} className="text-emerald-400 p-1"><X className="w-5 h-5" /></button>
             </div>
-            <p className="text-sm text-emerald-300 mb-6">{t("adminSubtitle", { n: COMPLAINT_THRESHOLD })}</p>
+
+            <div className="mt-4 mb-6">
+              <h3 className="text-sm font-semibold text-emerald-50">{t("joinRequestsTitle")} {pendingRequests.length > 0 && `(${pendingRequests.length})`}</h3>
+              {pendingRequests.length === 0 ? (
+                <p className="text-xs text-emerald-500 mt-2">{t("joinRequestsEmpty")}</p>
+              ) : (
+                <div className="space-y-3 mt-3">
+                  {pendingRequests.map((req) => (
+                    <div key={req.id} className="bg-emerald-900 rounded-2xl p-4 border border-emerald-700">
+                      <h4 className="font-semibold text-emerald-50">{req.name}</h4>
+                      <p className="text-xs text-emerald-300 mt-0.5">{req.area} · {req.address}</p>
+                      {req.phone && <p className="text-xs text-emerald-300 mt-0.5 mono" dir="ltr">{req.phone}</p>}
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => approveRequest(req.id)} className="flex-1 bg-emerald-500 text-emerald-950 text-sm font-medium rounded-lg py-2">{t("joinApprove")}</button>
+                        <button onClick={() => rejectRequest(req.id)} className="flex-1 bg-rose-950 text-rose-300 text-sm font-medium rounded-lg py-2">{t("joinReject")}</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <p className="text-sm text-emerald-300 mb-6 pt-4 border-t border-emerald-800">{t("adminSubtitle", { n: COMPLAINT_THRESHOLD })}</p>
             {reviewQueue.length === 0 && <div className="text-center text-emerald-600 mt-16 text-sm">{t("adminEmpty")}</div>}
             <div className="space-y-3">
               {reviewQueue.map((ph) => (
