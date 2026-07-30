@@ -693,10 +693,7 @@ function PharmacyFinder() {
   const [loginError, setLoginError] = useState(null);
   const [loginLoading, setLoginLoading] = useState(false);
   const [adminTab, setAdminTab] = useState("review");
-  const [showMap, setShowMap] = useState(false);
-const [activeTab, setActiveTab] = useState('list');
-const [mapInstance, setMapInstance] = useState(null);
-  const dir = lang === "ar" ? "rtl" : "ltr";
+    const dir = lang === "ar" ? "rtl" : "ltr";
 
   const wilaya = WILAYAS.find((w) => w.id === wilayaId);
   const t = (key, vars) => tr(lang, key, vars);
@@ -774,35 +771,7 @@ useEffect(() => {
   }
 }, [activeTab]);
 
-useEffect(() => {
-  if (mapInstance && activeTab === 'map' && list.length > 0) {
-    mapInstance.eachLayer((layer) => {
-      if (layer._url) mapInstance.removeLayer(layer);
-    });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(mapInstance);
-    
-    L.marker([userLoc.lat, userLoc.lng], {
-      icon: L.divIcon({
-        className: '',
-        html: '<div style="background:#3b82f6;border:3px solid white;border-radius:50%;width:16px;height:16px;box-shadow:0 0 10px #3b82f6;"></div>',
-        iconSize: [16, 16]
-      })
-    }).addTo(mapInstance).bindPopup(lang === 'ar' ? 'موقعك' : 'Vous');
-    
-    list.forEach(ph => {
-      const color = ph.onDuty ? '#f59e0b' : ph.status.open ? '#10b981' : '#ef4444';
-      L.marker([ph.lat, ph.lng], {
-        icon: L.divIcon({
-          className: '',
-          html: '<div style="background:' + color + ';border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 0 6px ' + color + ';"></div>',
-          iconSize: [14, 14]
-        })
-      }).addTo(mapInstance).bindPopup('<div style="text-align:right;font-family:sans-serif;"><b>' + ph.name + '</b><br><small>' + ph.address + '</small><br><small>' + (ph.onDuty ? '🚨 مناوبة' : ph.status.open ? '🟢 مفتوحة' : '🔴 مغلقة') + ' | ' + ph.distance.toFixed(1) + ' كم</small>' + (ph.phone ? '<br><small>📞 ' + ph.phone + '</small>' : '') + '</div>');
-    });
-  }
-}, [list, mapInstance, activeTab]);
+
   useEffect(() => {
     let cancelled = false;
     db.collection("removed_pharmacies").get()
