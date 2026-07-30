@@ -226,7 +226,7 @@ const SBA_PHARMACIES = [
 { id: 100, name: "صيدلية سيدي دحو الزاير", area: "حي النصر", address: "Cité Ennasr, Sidi Dahou Ezzair", phone: null, lat: 34.9833, lng: -0.7167, hours: { open: 8, close: 20.5 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
 ].map((p) => ({ ...p, wilaya: "سيدي بلعباس", commune: "سيدي بلعباس", verified: true }));
 
-const ORAN_COMMUNE_MAP ={
+const ORAN_COMMUNE_MAP =[
   { id: 131, name: "صيدلية السانية الكبرى", area: "وسط السانية", address: "Centre-ville, Es Senia", phone: "041 60 11 22", lat: 35.6478, lng: -0.6230, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
 { id: 132, name: "صيدلية النور السانية", area: "حي النور", address: "Cité Ennour, Es Senia", phone: "0550 66 77 88", lat: 35.6500, lng: -0.6200, hours: { open: 8, close: 22 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
 { id: 133, name: "صيدلية السلام السانية", area: "شارع الاستقلال", address: "Bd de l'Indépendance, Es Senia", phone: null, lat: 35.6450, lng: -0.6250, hours: { open: 8.5, close: 21 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
@@ -259,7 +259,7 @@ const ORAN_COMMUNE_MAP ={
 { id: 160, name: "صيدلية ديتوش", area: "حي ديتوش", address: "Cité Detouche, Oran", phone: null, lat: 35.7150, lng: -0.6500, hours: { open: 8.5, close: 21 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
 ].map((p) => ({ ...p, wilaya: "وهران", commune: ORAN_COMMUNE_MAP[p.id] || "وهران", verified: true }));
  
-  const ORAN_PHARMACIES = [{ id: 101, name: "صيدلية بوزيان", area: "شارع الشيخ عبد القادر", address: "50 Av. Cheikh Abdelkader, Oran", phone: "041 23 17 75", lat: 35.6903998, lng: -0.6409355, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
+  const ORAN_PHARMACIES = [ id: 101, name: "صيدلية بوزيان", area: "شارع الشيخ عبد القادر", address: "50 Av. Cheikh Abdelkader, Oran", phone: "041 23 17 75", lat: 35.6903998, lng: -0.6409355, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
 { id: 102, name: "صيدلية الحاج", area: "وهران", address: "Oran", phone: "041 23 25 78", lat: 35.674515, lng: -0.6503951, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
 { id: 103, name: "صيدلية بوزيان (الجامع الكبير)", area: "بوليفار عبد الحميد بن باديس", address: "Pole Abdelhamid Ibn Badis, Bir El Djir", phone: "041 23 17 75", lat: 35.6970558, lng: -0.6072521, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
 { id: 104, name: "صيدلية درڨال", area: "بئر الجير", address: "Bir El Djir, Oran", phone: "041 74 84 16", lat: 35.7149093, lng: -0.6026964, hours: { open: 8, close: 24 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
