@@ -224,7 +224,8 @@ const SBA_PHARMACIES = [
 { id: 98, name: "صيدلية مولاي النبي", area: "حي الرجاء", address: "Cité Erraja, Moulay Ennabi", phone: null, lat: 35.0333, lng: -0.6000, hours: { open: 8.5, close: 21 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
 { id: 99, name: "صيدلية تافسور", area: "نهج الأمير", address: "Rue Emir, Tafessour", phone: "0680 55 44 33", lat: 34.8000, lng: -0.6333, hours: { open: 8, close: 19.5 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
 { id: 100, name: "صيدلية سيدي دحو الزاير", area: "حي النصر", address: "Cité Ennasr, Sidi Dahou Ezzair", phone: null, lat: 34.9833, lng: -0.7167, hours: { open: 8, close: 20.5 }, onDuty: false, complaints: 0, ratingSum: 0, ratingCount: 0 },
-
+].map((p) => ({ ...p, wilaya: "سيدي بلعباس", commune: "سيدي بلعباس", verified: true }));
+```
 const ORAN_COMMUNE_MAP = {
   101: "وهران", 102: "وهران", 103: "بئر الجير", 104: "بئر الجير", 105: "وهران",
   106: "بئر الجير", 107: "وهران", 108: "بئر الجير", 109: "وهران", 110: "وهران",
