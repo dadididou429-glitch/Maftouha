@@ -1,0 +1,1471 @@
+function PharmacyFinder() {
+  const now = useNow();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [selected, setSelected] = useState(null);
+  const [complaints, setComplaints] = useState(() => Object.fromEntries(RAW_PHARMACIES.map((p) => [p.id, p.complaints])));
+  const [reportedByMe, setReportedByMe] = useState(() => new Set());
+  const [showReview, setShowReview] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [adminView, setAdminView] = useState(false);
+  const [removedIds, setRemovedIds] = useState(() => new Set());
+  const [lang, setLang] = useState("ar");
+  const [wilayaId, setWilayaId] = useState(22);
+  const [communeId, setCommuneId] = useState(0);
+  const [wilayaOpen, setWilayaOpen] = useState(false);
+  const [favorites, setFavorites] = useState(() => new Set());
+  const [ratings, setRatings] = useState(() => Object.fromEntries(RAW_PHARMACIES.map((p) => [p.id, { sum: p.ratingSum, count: p.ratingCount }])));
+  const [myReviews, setMyReviews] = useState({});
+  const [draftStars, setDraftStars] = useState(0);
+  const [draftText, setDraftText] = useState("");
+  const [userLoc, setUserLoc] = useState(DEFAULT_LOC);
+  const [submittedPharmacies, setSubmittedPharmacies] = useState([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formArea, setFormArea] = useState("");
+  const [formAddress, setFormAddress] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formOpen, setFormOpen] = useState(8);
+  const [formClose, setFormClose] = useState(21);
+  const [formOnDuty, setFormOnDuty] = useState(false);
+  const [formLoc, setFormLoc] = useState(null);
+  const [formLocStatus, setFormLocStatus] = useState(null);
+  const [formCommune, setFormCommune] = useState(null);
+  const [adminUser, setAdminUser] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [adminTab, setAdminTab] = useState("review");
+  const dir = lang === "ar" ? "rtl" : "ltr";
+
+  const wilaya = WILAYAS.find((w) => w.id === wilayaId);
+  const t = (key, vars) => tr(lang, key, vars);
+
+  const communesForWilayaRaw = COMMUNES_BY_WILAYA[wilaya.name] || [];
+  const presentCommunes = useMemo(() => {
+    const all = [...RAW_PHARMACIES, ...submittedPharmacies];
+    return new Set(all.filter((p) => p.wilaya === wilaya.name).map((p) => p.commune));
+  }, [submittedPharmacies, wilaya.name]);
+
+  const communesForWilaya = [
+    { id: 0, name: wilaya.name, label: t("allCommunes"), enabled: true },
+    ...communesForWilayaRaw.map((c) => ({ ...c, enabled: presentCommunes.has(c.name) })),
+  ];
+  const commune = communesForWilaya.find((c) => c.id === communeId) || communesForWilaya[0];
+  const statusLabel = (status) => status.kind === "onDuty" ? t("onDutyLabel") : t(status.kind, { time: fmtHour(status.time) });
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { timeout: 8000 }
+    );
+  }, []);
+
+  useEffect(() => {
+    setCommuneId(0);
+  }, [wilayaId]);
+
+  useEffect(() => {
+    const list = COMMUNES_BY_WILAYA[wilaya.name] || [];
+    setFormCommune((list[0] && list[0].name) || wilaya.name);
+  }, [wilaya.name]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!db) return;
+    db.collection("pharmacies_submitted").where("wilaya", "==", wilaya.name).get()
+      .then((snap) => {
+        if (cancelled) return;
+        const rows = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setSubmittedPharmacies(rows);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [wilaya.name]);
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((user) => setAdminUser(user));
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    db.collection("removed_pharmacies").get()
+      .then((snap) => {
+        if (cancelled) return;
+        setRemovedIds(new Set(snap.docs.map((d) => (isNaN(d.id) ? d.id : Number(d.id)))));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (selected) {
+      const mine = myReviews[selected.id];
+      setDraftStars(mine ? mine.stars : 0);
+      setDraftText(mine ? mine.text : "");
+    }
+  }, [selected && selected.id]);
+
+  const selectWilaya = (w) => {
+    if (!w.enabled) {
+      setToast(t("wilayaComingSoonToast", { name: w.name }));
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setWilayaId(w.id);
+  };
+
+  const selectCommune = (c) => {
+    setWilayaOpen(false);
+    if (c.id === 0) { setCommuneId(0); return; }
+    if (!c.enabled) {
+      setToast(t("wilayaComingSoonToast", { name: c.name }));
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setCommuneId(c.id);
+  };
+
+  const dismissComplaints = (id, name) => {
+    setComplaints((prev) => ({ ...prev, [id]: 0 }));
+    setToast(t("dismissedToast", { name }));
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const openAdmin = () => {
+    if (adminUser) setAdminView(true);
+    else setShowLogin(true);
+  };
+
+  const submitLogin = async () => {
+    setLoginError(null);
+    setLoginLoading(true);
+    try {
+      await auth.signInWithEmailAndPassword(loginEmail.trim(), loginPassword);
+      setShowLogin(false);
+      setAdminView(true);
+      setLoginPassword("");
+    } catch (err) {
+      setLoginError(t("loginError"));
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const logoutAdmin = () => {
+    auth.signOut();
+    setAdminView(false);
+  };
+
+  const toggleFavorite = (id, name) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); setToast(t("removedFavorite", { name })); }
+      else { next.add(id); setToast(t("addedFavorite", { name })); }
+      return next;
+    });
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const submitRating = (id) => {
+    if (draftStars === 0) {
+      setToast(t("pickStarsFirst"));
+      setTimeout(() => setToast(null), 2500);
+      return;
+    }
+    setRatings((prev) => {
+      const cur = prev[id] || { sum: 0, count: 0 };
+      const already = myReviews[id];
+      const sum = already ? cur.sum - already.stars + draftStars : cur.sum + draftStars;
+      const count = already ? cur.count : cur.count + 1;
+      return { ...prev, [id]: { sum, count } };
+    });
+    setMyReviews((prev) => ({ ...prev, [id]: { stars: draftStars, text: draftText } }));
+    setToast(t("reviewSubmitted"));
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const captureFormLocation = () => {
+    if (!navigator.geolocation) {
+      setFormLocStatus("failed");
+      return;
+    }
+    setFormLocStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFormLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setFormLocStatus("ok");
+      },
+      () => setFormLocStatus("failed"),
+      { timeout: 8000 }
+    );
+  };
+
+  const resetForm = () => {
+    setFormName(""); setFormArea(""); setFormAddress(""); setFormPhone("");
+    setFormOpen(8); setFormClose(21); setFormOnDuty(false);
+    setFormLoc(null); setFormLocStatus(null);
+  };
+
+  const submitNewPharmacy = async () => {
+    if (!formName.trim() || !formAddress.trim()) {
+      setToast(t("formRequiredError"));
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setSubmitting(true);
+    const loc = formLoc || userLoc;
+    const payload = {
+      name: formName.trim(),
+      area: formArea.trim(),
+      address: formAddress.trim(),
+      phone: formPhone.trim() || null,
+      lat: loc.lat,
+      lng: loc.lng,
+      wilaya: wilaya.name,
+      commune: formCommune || wilaya.name,
+      hours: { open: Number(formOpen), close: Number(formClose) },
+      onDuty: formOnDuty,
+      verified: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    try {
+      const ref = await db.collection("pharmacies_submitted").add(payload);
+      setSubmittedPharmacies((prev) => [...prev, { id: ref.id, ...payload }]);
+      setToast(t("newPharmacySuccess"));
+      resetForm();
+      setShowAddForm(false);
+    } catch (err) {
+      setToast(t("newPharmacyError"));
+    } finally {
+      setSubmitting(false);
+      setTimeout(() => setToast(null), 3500);
+    }
+  };
+
+  const removePermanently = async (id, name) => {
+    setRemovedIds((prev) => new Set(prev).add(id));
+    setToast(t("removedToast", { name }));
+    setTimeout(() => setToast(null), 3500);
+    try {
+      if (typeof id === "string") {
+        await db.collection("pharmacies_submitted").doc(id).delete();
+        setSubmittedPharmacies((prev) => prev.filter((p) => p.id !== id));
+      } else {
+        await db.collection("removed_pharmacies").doc(String(id)).set({
+          name, removedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (err) {}
+  };
+
+  const reportPharmacy = (id, name) => {
+    if (reportedByMe.has(id)) { setToast(t("alreadyReported")); return; }
+    setComplaints((prev) => {
+      const next = { ...prev, [id]: (prev[id] || 0) + 1 };
+      setToast(next[id] === COMPLAINT_THRESHOLD ? t("thresholdReached", { n: COMPLAINT_THRESHOLD, name }) : t("thanksReport"));
+      return next;
+    });
+    setReportedByMe((prev) => new Set(prev).add(id));
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const basePharmacies = useMemo(() => {
+    const submitted = submittedPharmacies.map((p) => ({
+      ...p,
+      verified: false,
+      hours: p.hours || { open: p.formOpen ?? 8, close: p.formClose ?? 21 },
+      complaints: 0, ratingSum: 0, ratingCount: 0,
+    }));
+    const merged = [...RAW_PHARMACIES, ...submitted].filter((ph) => ph.wilaya === wilaya.name);
+    if (communeId === 0) return merged;
+    return merged.filter((ph) => ph.commune === commune.name);
+  }, [submittedPharmacies, wilaya.name, communeId, commune]);
+
+  const allComputed = useMemo(() => {
+    return basePharmacies.filter((ph) => !removedIds.has(ph.id)).map((ph) => {
+      const status = computeStatus(ph, now);
+      const distance = haversine(userLoc.lat, userLoc.lng, ph.lat, ph.lng);
+      const complaintCount = complaints[ph.id] || 0;
+      const r = ratings[ph.id] || { sum: ph.ratingSum || 0, count: ph.ratingCount || 0 };
+      return {
+        ...ph, status, distance, complaintCount,
+        underReview: complaintCount >= COMPLAINT_THRESHOLD,
+        avgRating: r.count > 0 ? r.sum / r.count : null,
+        ratingCount: r.count,
+        isFavorite: favorites.has(ph.id),
+      };
+    });
+  }, [basePharmacies, now, complaints, removedIds, ratings, favorites, userLoc]);
+
+  const selectedLive = selected ? allComputed.find((p) => p.id === selected.id) || selected : null;
+
+  const list = useMemo(() => {
+    return allComputed
+      .filter((ph) => (ph.name + ph.area + ph.address).toLowerCase().includes(query.toLowerCase()))
+      .filter((ph) => (filter === "open" ? ph.status.open : true))
+      .filter((ph) => (filter === "urgent" ? ph.onDuty : true))
+      .filter((ph) => (filter === "favorites" ? ph.isFavorite : true))
+      .filter((ph) => (showReview ? true : !ph.underReview))
+      .sort((a, b) => a.distance - b.distance);
+  }, [allComputed, query, filter, showReview]);
+
+  const reviewQueue = useMemo(() => {
+    return RAW_PHARMACIES.filter((ph) => !removedIds.has(ph.id))
+      .map((ph) => ({ ...ph, complaintCount: complaints[ph.id] || 0 }))
+      .filter((ph) => ph.complaintCount >= COMPLAINT_THRESHOLD)
+      .sort((a, b) => b.complaintCount - a.complaintCount);
+  }, [complaints, removedIds]);
+
+  const reviewCount = Object.values(complaints).filter((c) => c >= COMPLAINT_THRESHOLD).length;
+  const openCount = list.filter((p) => p.status.open).length;
+  const localeMap = { ar: "ar-DZ", fr: "fr-DZ", en: "en-GB" };
+  const timeStr = now.toLocaleTimeString(localeMap[lang], { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div dir={dir} className="min-h-screen bg-emerald-50 text-stone-900" style={{ fontFamily: lang === "ar" ? "'IBM Plex Sans Arabic', sans-serif" : "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}>
+      <header className="sticky top-0 z-20 bg-emerald-950 text-emerald-50 px-5 pt-4 pb-5 rounded-b-2xl shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-md bg-emerald-700 flex items-center justify-center flex-shrink-0 shadow-md">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6V3z" fill="#F0F4F1" /></svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-emerald-400 leading-tight" dir="ltr">Pharis</h1>
+              <p className="text-xs text-emerald-300">{commune.name}</p>
+            </div>
+          </div>
+          <div className="text-left flex items-center gap-1.5">
+            <button onClick={openAdmin} className="mono text-emerald-400 text-[10px] border border-emerald-800 rounded-md px-2 py-1 hover:bg-emerald-900 transition">{t("dashboard")}</button>
+            <div className="mono text-emerald-400 text-xs border border-emerald-800 rounded-md px-2 py-1">{timeStr}</div>
+          </div>
+        </div>
+
+        <button onClick={() => setWilayaOpen((s) => !s)}
+          className={`mt-3 w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 border transition ${wilayaOpen ? "bg-emerald-500 border-emerald-400 text-emerald-950" : "bg-emerald-900 border-emerald-700 text-emerald-100 hover:bg-emerald-800"}`}>
+          <span className="flex items-center gap-2 text-sm font-medium"><MapPin className="w-4 h-4" />{t("tagline", { wilaya: commune.name })}</span>
+          <span className={`text-xs font-semibold underline ${wilayaOpen ? "text-emerald-950" : "text-emerald-300"}`}>{t("changeWilaya")}</span>
+        </button>
+
+        <div className="flex gap-1.5 mt-2">
+          {[{ code: "ar", label: "العربية" }, { code: "fr", label: "Français" }, { code: "en", label: "English" }].map((l) => (
+            <button key={l.code} onClick={() => setLang(l.code)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition ${lang === l.code ? "bg-emerald-400 text-emerald-950" : "bg-emerald-900 text-emerald-300"}`}>
+              {l.label}
+            </button>
+          ))}
+        </div>
+
+        {wilayaOpen && (
+          <div className="mt-3 bg-emerald-950 rounded-2xl p-3 max-h-80 overflow-y-auto border border-emerald-800 space-y-3">
+            <div>
+              <p className="text-xs text-emerald-300 px-1 pb-2">{t("wilayaLabel")}</p>
+              <div className="grid grid-cols-2 gap-1">
+                {WILAYAS.map((w) => (
+                  <button key={w.id} onClick={() => selectWilaya(w)}
+                    className={`text-right text-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-1 transition ${w.id === wilayaId ? "bg-emerald-500 text-emerald-950 font-medium" : w.enabled ? "text-emerald-200 hover:bg-emerald-900" : "text-emerald-600"}`}>
+                    <span className="truncate">{w.name}</span>
+                    {!w.enabled && <span className="text-[9px] flex-shrink-0 opacity-70">{t("comingSoon")}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="pt-3 border-t border-emerald-800">
+              <p className="text-xs text-emerald-300 px-1 pb-2">{t("communeLabel")}</p>
+              <div className="grid grid-cols-2 gap-1">
+                {communesForWilaya.map((c) => (
+                  <button key={c.id} onClick={() => selectCommune(c)}
+                    className={`text-right text-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-1 transition ${c.id === communeId ? "bg-emerald-500 text-emerald-950 font-medium" : c.enabled ? "text-emerald-200 hover:bg-emerald-900" : "text-emerald-600"}`}>
+                    <span className="truncate">{c.label || c.name}</span>
+                    {!c.enabled && <span className="text-[9px] flex-shrink-0 opacity-70">{t("comingSoon")}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-3 flex items-baseline gap-2">
+          <span className="text-3xl font-bold mono text-emerald-400">{openCount}</span>
+          <span className="text-xs text-emerald-200">{t("openStat", { total: list.length })}</span>
+        </div>
+
+        <div className="mt-3 relative">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("searchPlaceholder")}
+            className="w-full bg-emerald-900 placeholder-stone-500 text-emerald-50 rounded-xl pr-10 pl-4 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition" />
+        </div>
+
+        <div className="flex gap-2 mt-2 flex-wrap">
+          <button onClick={() => setFilter("all")} className={`px-3 py-1 rounded-full text-xs font-medium transition ${filter === "all" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-200"}`}>{t("filterAll")}</button>
+          <button onClick={() => setFilter("urgent")} className={`px-3 py-1 rounded-full text-xs font-bold transition ${filter === "urgent" ? "bg-rose-500 text-white" : "bg-rose-950 text-rose-300"}`}>{t("filterUrgent")}</button>
+          <button onClick={() => setFilter("open")} className={`px-3 py-1 rounded-full text-xs font-medium transition ${filter === "open" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-200"}`}>{t("filterOpen")}</button>
+          <button onClick={() => setFilter("favorites")} className={`px-3 py-1 rounded-full text-xs font-medium transition flex items-center gap-1 ${filter === "favorites" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-200"}`}>
+            <Heart className="w-3 h-3" fill={filter === "favorites" ? "currentColor" : "none"} />{t("filterFavorites")}
+          </button>
+          {reviewCount > 0 && (
+            <button onClick={() => setShowReview((s) => !s)} className={`px-2.5 py-1 rounded-full text-xs font-medium transition flex items-center gap-1 ${showReview ? "bg-rose-500 text-white" : "bg-emerald-900 text-rose-300"}`}>
+              <AlertTriangle className="w-3 h-3" />{t("reviewBtn", { n: reviewCount })}
+            </button>
+          )}
+          <button onClick={() => setShowAddForm(true)} className="mr-auto px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400 text-emerald-950 flex items-center gap-1">
+            + {t("addPharmacyBtn")}
+          </button>
+        </div>
+      </header>
+
+      {toast && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-emerald-950 text-emerald-50 text-sm px-4 py-2.5 rounded-full shadow-lg max-w-[90%] text-center">{toast}</div>}
+
+      <main className="px-5 py-5 space-y-3 max-w-md mx-auto">
+        {list.length === 0 && <p className="text-center text-stone-500 mt-10">{filter === "favorites" ? t("noFavorites") : t("noResults")}</p>}
+        {list.map((ph) => (
+          <div key={ph.id} className={`w-full bg-white rounded-2xl p-4 shadow-sm border transition ${ph.underReview ? "border-rose-300 bg-rose-50" : "border-stone-200 hover:shadow-md"}`}>
+            {ph.underReview && (
+              <div className="flex items-center gap-1.5 text-xs font-medium text-rose-500 mb-2 bg-rose-50 rounded-lg px-2.5 py-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />{t("underReviewBanner", { n: ph.complaintCount })}
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <button onClick={() => setSelected(ph)} className="flex-1 min-w-0 text-right flex items-center gap-3">
+                <div className={`relative w-3 h-3 rounded-full pulse-dot flex-shrink-0 ${ph.status.open ? "text-emerald-500 bg-emerald-500" : "text-rose-500 bg-rose-500"}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-stone-900 truncate flex items-center gap-1.5">
+                      {ph.name}
+                      {ph.verified === false && (
+                        <span className="text-[9px] font-medium bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 flex-shrink-0">{t("unverifiedBadge")}</span>
+                      )}
+                    </h3>
+                    <span className="mono text-xs text-stone-500 flex-shrink-0 mr-2">{ph.distance.toFixed(1)} {lang === "ar" ? "كم" : "km"}</span>
+                  </div>
+                  <p className="text-xs text-stone-500 mt-0.5">{ph.area} · {ph.address}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className={`text-xs font-medium ${ph.status.open ? "text-emerald-700" : "text-rose-500"}`}>
+                      {ph.status.open ? t("openNow") : t("closedNow")} · {statusLabel(ph.status)}
+                    </p>
+                    {ph.avgRating !== null && (
+                      <span className="flex items-center gap-0.5 text-xs text-amber-600 flex-shrink-0 mr-2">
+                        <Star className="w-3 h-3" fill="currentColor" />{ph.avgRating.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+              <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                <button onClick={() => toggleFavorite(ph.id, ph.name)} title={t("filterFavorites")}
+                  className={`p-2 rounded-full transition ${ph.isFavorite ? "text-rose-500" : "text-stone-400 hover:bg-rose-50 hover:text-rose-500"}`}>
+                  <Heart className="w-4 h-4" fill={ph.isFavorite ? "currentColor" : "none"} />
+                </button>
+                <button onClick={() => reportPharmacy(ph.id, ph.name)} title={t("reportTitle")} className="p-2 rounded-full text-stone-400 hover:bg-rose-50 hover:text-rose-500 transition">
+                  <Flag className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </main>
+
+      {selected && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setSelected(null)}>
+          <div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  {selectedLive.name}
+                  {selectedLive.verified === false && (
+                    <span className="text-[10px] font-medium bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{t("unverifiedBadge")}</span>
+                  )}
+                </h2>
+                <p className="text-sm text-stone-500 mt-0.5">{selectedLive.area}</p>
+                {selectedLive.verified === false && (
+                  <p className="text-xs text-amber-600 mt-1">{t("unverifiedNote")}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => toggleFavorite(selectedLive.id, selectedLive.name)} className={selectedLive.isFavorite ? "text-rose-500 p-1" : "text-stone-400 p-1"}>
+                  <Heart className="w-5 h-5" fill={selectedLive.isFavorite ? "currentColor" : "none"} />
+                </button>
+                <button onClick={() => setSelected(null)} className="text-stone-500 p-1"><X className="w-5 h-5" /></button>
+              </div>
+            </div>
+            <div className={`inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-sm font-medium ${selectedLive.status.open ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-500"}`}>
+              <span className={`w-2 h-2 rounded-full ${selectedLive.status.open ? "bg-emerald-500" : "bg-rose-500"}`} />
+              {selectedLive.status.open ? t("openNow") : t("closedNowFull")}
+            </div>
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="flex items-center gap-2 text-stone-900"><MapPin className="w-4 h-4 text-stone-500" />{selectedLive.address}</div>
+              <div className="flex items-center gap-2 text-stone-900 mono"><Navigation className="w-4 h-4 text-stone-500" />{selectedLive.distance.toFixed(1)} {lang === "ar" ? "كم عنك" : "km away"}</div>
+              <div className="flex items-center gap-2 text-stone-900"><Clock className="w-4 h-4 text-stone-500" />{statusLabel(selectedLive.status)}</div>
+              {selectedLive.phone && <div className="flex items-center gap-2 text-stone-900 mono"><Phone className="w-4 h-4 text-stone-500" /><span dir="ltr">{selectedLive.phone}</span></div>}
+            </div>
+            {selectedLive.underReview && (
+              <div className="flex items-start gap-2 text-xs text-rose-500 mt-4 bg-rose-50 rounded-lg px-3 py-2.5">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />{t("underReviewDetail", { n: selectedLive.complaintCount })}
+              </div>
+            )}
+
+            <div className="mt-5 pt-4 border-t border-stone-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-stone-900">{t("reviewsTitle")}</h3>
+                {selectedLive.avgRating !== null ? (
+                  <span className="flex items-center gap-1 text-sm text-amber-600">
+                    <Star className="w-4 h-4" fill="currentColor" />{selectedLive.avgRating.toFixed(1)}
+                    <span className="text-stone-400 text-xs">{t("ratingsCount", { n: selectedLive.ratingCount })}</span>
+                  </span>
+                ) : <span className="text-xs text-stone-400">{t("noRatingsYet")}</span>}
+              </div>
+              <p className="text-xs text-stone-500 mt-3 mb-1.5">{t("yourRating")}</p>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} onClick={() => setDraftStars(n)} className="p-0.5">
+                    <Star className={`w-6 h-6 ${n <= draftStars ? "text-amber-500" : "text-stone-200"}`} fill={n <= draftStars ? "currentColor" : "none"} />
+                  </button>
+                ))}
+              </div>
+              <textarea value={draftText} onChange={(e) => setDraftText(e.target.value)} placeholder={t("reviewPlaceholder")} rows={2}
+                className="w-full mt-2 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500 transition resize-none" />
+              <button onClick={() => submitRating(selectedLive.id)} className="mt-2 w-full bg-emerald-700 text-emerald-50 rounded-xl py-2 text-sm font-medium">{t("submitReview")}</button>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${selectedLive.lat},${selectedLive.lng}`} target="_blank" rel="noopener noreferrer"
+                className="flex-1 bg-emerald-950 text-emerald-50 rounded-xl py-3 font-medium text-center">{t("directions")}</a>
+              <button onClick={() => reportPharmacy(selectedLive.id, selectedLive.name)} className="px-4 rounded-xl border border-stone-200 text-rose-500 flex items-center justify-center" title={t("reportTitle")}>
+                <Flag className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => !submitting && setShowAddForm(false)}>
+          <div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-bold">{t("addPharmacyTitle")}</h2>
+                <p className="text-sm text-stone-500 mt-0.5">{t("addPharmacySubtitle")}</p>
+              </div>
+              <button onClick={() => !submitting && setShowAddForm(false)} className="text-stone-500 p-1"><X className="w-5 h-5" /></button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">{t("formName")}</label>
+                <input value={formName} onChange={(e) => setFormName(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">{t("communeLabel")}</label>
+                <select value={formCommune || ""} onChange={(e) => setFormCommune(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+                  {(COMMUNES_BY_WILAYA[wilaya.name] || []).map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">{t("formArea")}</label>
+                <input value={formArea} onChange={(e) => setFormArea(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">{t("formAddress")}</label>
+                <input value={formAddress} onChange={(e) => setFormAddress(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">{t("formPhone")}</label>
+                <input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} dir="ltr"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-stone-700 py-1">
+                <input type="checkbox" checked={formOnDuty} onChange={(e) => setFormOnDuty(e.target.checked)} className="w-4 h-4 accent-emerald-600" />
+                {t("formOnDuty")}
+              </label>
+
+              {!formOnDuty && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-stone-500 mb-1 block">{t("formOpenHour")}</label>
+                    <input type="number" min="0" max="24" step="0.5" value={formOpen} onChange={(e) => setFormOpen(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-stone-500 mb-1 block">{t("formCloseHour")}</label>
+                    <input type="number" min="0" max="30" step="0.5" value={formClose} onChange={(e) => setFormClose(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                  </div>
+                </div>
+              )}
+
+              <button onClick={captureFormLocation} type="button"
+                className="w-full flex items-center justify-center gap-2 border border-stone-200 rounded-xl py-2.5 text-sm font-medium text-stone-700">
+                <Navigation className="w-4 h-4" />
+                {formLocStatus === "ok" ? t("locationCaptured") : t("useMyLocation")}
+              </button>
+              {formLocStatus === "failed" && <p className="text-xs text-rose-500">{t("locationFailed")}</p>}
+
+              <button onClick={submitNewPharmacy} disabled={submitting}
+                className="w-full bg-emerald-700 disabled:opacity-60 text-emerald-50 rounded-xl py-3 text-sm font-semibold mt-2">
+                {submitting ? t("submittingPharmacy") : t("submitNewPharmacy")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLogin && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setShowLogin(false)}>
+          <div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <h2 className="text-xl font-bold">{t("adminLoginTitle")}</h2>
+              <button onClick={() => setShowLogin(false)} className="text-stone-500 p-1"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="mt-4 space-y-3">
+              <input value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} dir="ltr" placeholder="admin@email.com"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} type="password" dir="ltr" placeholder="••••••••"
+                onKeyDown={(e) => e.key === "Enter" && submitLogin()}
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              {loginError && <p className="text-xs text-rose-500">{loginError}</p>}
+              <button onClick={submitLogin} disabled={loginLoading}
+                className="w-full bg-emerald-700 disabled:opacity-60 text-emerald-50 rounded-xl py-3 text-sm font-semibold">
+                {loginLoading ? "..." : t("loginBtn")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {adminView && (
+        <div className="fixed inset-0 bg-emerald-950 z-40 overflow-y-auto">
+          <div className="max-w-md mx-auto px-5 py-6">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-xl font-bold text-emerald-50">{t("adminTitle")}</h2>
+              <div className="flex items-center gap-2">
+                <button onClick={logoutAdmin} className="text-xs text-rose-300 border border-rose-900 rounded-md px-2 py-1">{t("logoutBtn")}</button>
+                <button onClick={() => setAdminView(false)} className="text-emerald-400 p-1"><X className="w-5 h-5" /></button>
+              </div>
+            </div>
+            <p className="text-xs text-emerald-500 mb-4 mono" dir="ltr">{adminUser && adminUser.email}</p>
+
+            <div className="flex gap-2 mb-5">
+              <button onClick={() => setAdminTab("review")}
+                className={`flex-1 text-xs font-medium rounded-lg py-2 ${adminTab === "review" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-300"}`}>
+                {t("reviewBtn", { n: reviewQueue.length })}
+              </button>
+              <button onClick={() => setAdminTab("all")}
+                className={`flex-1 text-xs font-medium rounded-lg py-2 ${adminTab === "all" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-300"}`}>
+                {t("allPharmaciesTab", { n: allComputed.length })}
+              </button>
+            </div>
+
+            {adminTab === "review" && (
+              <>
+                <p className="text-sm text-emerald-300 mb-4">{t("adminSubtitle", { n: COMPLAINT_THRESHOLD })}</p>
+                {reviewQueue.length === 0 && <div className="text-center text-emerald-600 mt-16 text-sm">{t("adminEmpty")}</div>}
+                <div className="space-y-3">
+                  {reviewQueue.map((ph) => (
+                    <div key={ph.id} className="bg-emerald-950 rounded-2xl p-4 border border-emerald-800">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-emerald-50">{ph.name}</h3>
+                          <p className="text-xs text-emerald-300 mt-0.5">{ph.area} · {ph.address}</p>
+                          {ph.phone && <p className="text-xs text-emerald-300 mt-0.5 mono" dir="ltr">{ph.phone}</p>}
+                        </div>
+                        <div className="flex items-center gap-1 bg-rose-950 text-rose-300 text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0">
+                          <AlertTriangle className="w-3 h-3" />{ph.complaintCount}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <button onClick={() => dismissComplaints(ph.id, ph.name)} className="flex-1 bg-emerald-900 text-emerald-400 text-sm font-medium rounded-lg py-2.5">{t("verifyReturn")}</button>
+                        <button onClick={() => removePermanently(ph.id, ph.name)} className="flex-1 bg-rose-950 text-rose-300 text-sm font-medium rounded-lg py-2.5">{t("deleteFinal")}</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {adminTab === "all" && (
+              <>
+                <p className="text-sm text-emerald-300 mb-4">{t("allPharmaciesSubtitle")}</p>
+                <div className="space-y-2">
+                  {allComputed.map((ph) => (
+                    <div key={ph.id} className="bg-emerald-950 rounded-xl p-3 border border-emerald-800 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-emerald-50 truncate flex items-center gap-1.5">
+                          {ph.name}
+                          {ph.verified === false && <span className="text-[9px] bg-amber-900 text-amber-300 rounded-full px-1.5 py-0.5 flex-shrink-0">{t("unverifiedBadge")}</span>}
+                        </p>
+                        <p className="text-xs text-emerald-400 truncate">{ph.area}</p>
+                      </div>
+                      <button onClick={() => removePermanently(ph.id, ph.name)} className="flex-shrink-0 bg-rose-950 text-rose-300 text-xs font-medium rounded-lg px-3 py-2">{t("deleteFinal")}</button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<PharmacyFinder />);
+document.getElementById("root").dataset.mounted = "true";
+</script>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("service-worker.js").catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>function PharmacyFinder() {
+  const now = useNow();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [selected, setSelected] = useState(null);
+  const [complaints, setComplaints] = useState(() => Object.fromEntries(RAW_PHARMACIES.map((p) => [p.id, p.complaints])));
+  const [reportedByMe, setReportedByMe] = useState(() => new Set());
+  const [showReview, setShowReview] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [adminView, setAdminView] = useState(false);
+  const [removedIds, setRemovedIds] = useState(() => new Set());
+  const [lang, setLang] = useState("ar");
+  const [wilayaId, setWilayaId] = useState(22);
+  const [communeId, setCommuneId] = useState(0);
+  const [wilayaOpen, setWilayaOpen] = useState(false);
+  const [favorites, setFavorites] = useState(() => new Set());
+  const [ratings, setRatings] = useState(() => Object.fromEntries(RAW_PHARMACIES.map((p) => [p.id, { sum: p.ratingSum, count: p.ratingCount }])));
+  const [myReviews, setMyReviews] = useState({});
+  const [draftStars, setDraftStars] = useState(0);
+  const [draftText, setDraftText] = useState("");
+  const [userLoc, setUserLoc] = useState(DEFAULT_LOC);
+  const [submittedPharmacies, setSubmittedPharmacies] = useState([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formArea, setFormArea] = useState("");
+  const [formAddress, setFormAddress] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formOpen, setFormOpen] = useState(8);
+  const [formClose, setFormClose] = useState(21);
+  const [formOnDuty, setFormOnDuty] = useState(false);
+  const [formLoc, setFormLoc] = useState(null);
+  const [formLocStatus, setFormLocStatus] = useState(null);
+  const [formCommune, setFormCommune] = useState(null);
+  const [adminUser, setAdminUser] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [adminTab, setAdminTab] = useState("review");
+  const dir = lang === "ar" ? "rtl" : "ltr";
+
+  const wilaya = WILAYAS.find((w) => w.id === wilayaId);
+  const t = (key, vars) => tr(lang, key, vars);
+
+  const communesForWilayaRaw = COMMUNES_BY_WILAYA[wilaya.name] || [];
+  const presentCommunes = useMemo(() => {
+    const all = [...RAW_PHARMACIES, ...submittedPharmacies];
+    return new Set(all.filter((p) => p.wilaya === wilaya.name).map((p) => p.commune));
+  }, [submittedPharmacies, wilaya.name]);
+
+  const communesForWilaya = [
+    { id: 0, name: wilaya.name, label: t("allCommunes"), enabled: true },
+    ...communesForWilayaRaw.map((c) => ({ ...c, enabled: presentCommunes.has(c.name) })),
+  ];
+  const commune = communesForWilaya.find((c) => c.id === communeId) || communesForWilaya[0];
+  const statusLabel = (status) => status.kind === "onDuty" ? t("onDutyLabel") : t(status.kind, { time: fmtHour(status.time) });
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { timeout: 8000 }
+    );
+  }, []);
+
+  useEffect(() => {
+    setCommuneId(0);
+  }, [wilayaId]);
+
+  useEffect(() => {
+    const list = COMMUNES_BY_WILAYA[wilaya.name] || [];
+    setFormCommune((list[0] && list[0].name) || wilaya.name);
+  }, [wilaya.name]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!db) return;
+    db.collection("pharmacies_submitted").where("wilaya", "==", wilaya.name).get()
+      .then((snap) => {
+        if (cancelled) return;
+        const rows = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setSubmittedPharmacies(rows);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [wilaya.name]);
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((user) => setAdminUser(user));
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    db.collection("removed_pharmacies").get()
+      .then((snap) => {
+        if (cancelled) return;
+        setRemovedIds(new Set(snap.docs.map((d) => (isNaN(d.id) ? d.id : Number(d.id)))));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (selected) {
+      const mine = myReviews[selected.id];
+      setDraftStars(mine ? mine.stars : 0);
+      setDraftText(mine ? mine.text : "");
+    }
+  }, [selected && selected.id]);
+
+  const selectWilaya = (w) => {
+    if (!w.enabled) {
+      setToast(t("wilayaComingSoonToast", { name: w.name }));
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setWilayaId(w.id);
+  };
+
+  const selectCommune = (c) => {
+    setWilayaOpen(false);
+    if (c.id === 0) { setCommuneId(0); return; }
+    if (!c.enabled) {
+      setToast(t("wilayaComingSoonToast", { name: c.name }));
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setCommuneId(c.id);
+  };
+
+  const dismissComplaints = (id, name) => {
+    setComplaints((prev) => ({ ...prev, [id]: 0 }));
+    setToast(t("dismissedToast", { name }));
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const openAdmin = () => {
+    if (adminUser) setAdminView(true);
+    else setShowLogin(true);
+  };
+
+  const submitLogin = async () => {
+    setLoginError(null);
+    setLoginLoading(true);
+    try {
+      await auth.signInWithEmailAndPassword(loginEmail.trim(), loginPassword);
+      setShowLogin(false);
+      setAdminView(true);
+      setLoginPassword("");
+    } catch (err) {
+      setLoginError(t("loginError"));
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const logoutAdmin = () => {
+    auth.signOut();
+    setAdminView(false);
+  };
+
+  const toggleFavorite = (id, name) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); setToast(t("removedFavorite", { name })); }
+      else { next.add(id); setToast(t("addedFavorite", { name })); }
+      return next;
+    });
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const submitRating = (id) => {
+    if (draftStars === 0) {
+      setToast(t("pickStarsFirst"));
+      setTimeout(() => setToast(null), 2500);
+      return;
+    }
+    setRatings((prev) => {
+      const cur = prev[id] || { sum: 0, count: 0 };
+      const already = myReviews[id];
+      const sum = already ? cur.sum - already.stars + draftStars : cur.sum + draftStars;
+      const count = already ? cur.count : cur.count + 1;
+      return { ...prev, [id]: { sum, count } };
+    });
+    setMyReviews((prev) => ({ ...prev, [id]: { stars: draftStars, text: draftText } }));
+    setToast(t("reviewSubmitted"));
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const captureFormLocation = () => {
+    if (!navigator.geolocation) {
+      setFormLocStatus("failed");
+      return;
+    }
+    setFormLocStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFormLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setFormLocStatus("ok");
+      },
+      () => setFormLocStatus("failed"),
+      { timeout: 8000 }
+    );
+  };
+
+  const resetForm = () => {
+    setFormName(""); setFormArea(""); setFormAddress(""); setFormPhone("");
+    setFormOpen(8); setFormClose(21); setFormOnDuty(false);
+    setFormLoc(null); setFormLocStatus(null);
+  };
+
+  const submitNewPharmacy = async () => {
+    if (!formName.trim() || !formAddress.trim()) {
+      setToast(t("formRequiredError"));
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+    setSubmitting(true);
+    const loc = formLoc || userLoc;
+    const payload = {
+      name: formName.trim(),
+      area: formArea.trim(),
+      address: formAddress.trim(),
+      phone: formPhone.trim() || null,
+      lat: loc.lat,
+      lng: loc.lng,
+      wilaya: wilaya.name,
+      commune: formCommune || wilaya.name,
+      hours: { open: Number(formOpen), close: Number(formClose) },
+      onDuty: formOnDuty,
+      verified: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    try {
+      const ref = await db.collection("pharmacies_submitted").add(payload);
+      setSubmittedPharmacies((prev) => [...prev, { id: ref.id, ...payload }]);
+      setToast(t("newPharmacySuccess"));
+      resetForm();
+      setShowAddForm(false);
+    } catch (err) {
+      setToast(t("newPharmacyError"));
+    } finally {
+      setSubmitting(false);
+      setTimeout(() => setToast(null), 3500);
+    }
+  };
+
+  const removePermanently = async (id, name) => {
+    setRemovedIds((prev) => new Set(prev).add(id));
+    setToast(t("removedToast", { name }));
+    setTimeout(() => setToast(null), 3500);
+    try {
+      if (typeof id === "string") {
+        await db.collection("pharmacies_submitted").doc(id).delete();
+        setSubmittedPharmacies((prev) => prev.filter((p) => p.id !== id));
+      } else {
+        await db.collection("removed_pharmacies").doc(String(id)).set({
+          name, removedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (err) {}
+  };
+
+  const reportPharmacy = (id, name) => {
+    if (reportedByMe.has(id)) { setToast(t("alreadyReported")); return; }
+    setComplaints((prev) => {
+      const next = { ...prev, [id]: (prev[id] || 0) + 1 };
+      setToast(next[id] === COMPLAINT_THRESHOLD ? t("thresholdReached", { n: COMPLAINT_THRESHOLD, name }) : t("thanksReport"));
+      return next;
+    });
+    setReportedByMe((prev) => new Set(prev).add(id));
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const basePharmacies = useMemo(() => {
+    const submitted = submittedPharmacies.map((p) => ({
+      ...p,
+      verified: false,
+      hours: p.hours || { open: p.formOpen ?? 8, close: p.formClose ?? 21 },
+      complaints: 0, ratingSum: 0, ratingCount: 0,
+    }));
+    const merged = [...RAW_PHARMACIES, ...submitted].filter((ph) => ph.wilaya === wilaya.name);
+    if (communeId === 0) return merged;
+    return merged.filter((ph) => ph.commune === commune.name);
+  }, [submittedPharmacies, wilaya.name, communeId, commune]);
+
+  const allComputed = useMemo(() => {
+    return basePharmacies.filter((ph) => !removedIds.has(ph.id)).map((ph) => {
+      const status = computeStatus(ph, now);
+      const distance = haversine(userLoc.lat, userLoc.lng, ph.lat, ph.lng);
+      const complaintCount = complaints[ph.id] || 0;
+      const r = ratings[ph.id] || { sum: ph.ratingSum || 0, count: ph.ratingCount || 0 };
+      return {
+        ...ph, status, distance, complaintCount,
+        underReview: complaintCount >= COMPLAINT_THRESHOLD,
+        avgRating: r.count > 0 ? r.sum / r.count : null,
+        ratingCount: r.count,
+        isFavorite: favorites.has(ph.id),
+      };
+    });
+  }, [basePharmacies, now, complaints, removedIds, ratings, favorites, userLoc]);
+
+  const selectedLive = selected ? allComputed.find((p) => p.id === selected.id) || selected : null;
+
+  const list = useMemo(() => {
+    return allComputed
+      .filter((ph) => (ph.name + ph.area + ph.address).toLowerCase().includes(query.toLowerCase()))
+      .filter((ph) => (filter === "open" ? ph.status.open : true))
+      .filter((ph) => (filter === "urgent" ? ph.onDuty : true))
+      .filter((ph) => (filter === "favorites" ? ph.isFavorite : true))
+      .filter((ph) => (showReview ? true : !ph.underReview))
+      .sort((a, b) => a.distance - b.distance);
+  }, [allComputed, query, filter, showReview]);
+
+  const reviewQueue = useMemo(() => {
+    return RAW_PHARMACIES.filter((ph) => !removedIds.has(ph.id))
+      .map((ph) => ({ ...ph, complaintCount: complaints[ph.id] || 0 }))
+      .filter((ph) => ph.complaintCount >= COMPLAINT_THRESHOLD)
+      .sort((a, b) => b.complaintCount - a.complaintCount);
+  }, [complaints, removedIds]);
+
+  const reviewCount = Object.values(complaints).filter((c) => c >= COMPLAINT_THRESHOLD).length;
+  const openCount = list.filter((p) => p.status.open).length;
+  const localeMap = { ar: "ar-DZ", fr: "fr-DZ", en: "en-GB" };
+  const timeStr = now.toLocaleTimeString(localeMap[lang], { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div dir={dir} className="min-h-screen bg-emerald-50 text-stone-900" style={{ fontFamily: lang === "ar" ? "'IBM Plex Sans Arabic', sans-serif" : "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}>
+      <header className="sticky top-0 z-20 bg-emerald-950 text-emerald-50 px-5 pt-4 pb-5 rounded-b-2xl shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-md bg-emerald-700 flex items-center justify-center flex-shrink-0 shadow-md">
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6V3z" fill="#F0F4F1" /></svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-emerald-400 leading-tight" dir="ltr">Pharis</h1>
+              <p className="text-xs text-emerald-300">{commune.name}</p>
+            </div>
+          </div>
+          <div className="text-left flex items-center gap-1.5">
+            <button onClick={openAdmin} className="mono text-emerald-400 text-[10px] border border-emerald-800 rounded-md px-2 py-1 hover:bg-emerald-900 transition">{t("dashboard")}</button>
+            <div className="mono text-emerald-400 text-xs border border-emerald-800 rounded-md px-2 py-1">{timeStr}</div>
+          </div>
+        </div>
+
+        <button onClick={() => setWilayaOpen((s) => !s)}
+          className={`mt-3 w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 border transition ${wilayaOpen ? "bg-emerald-500 border-emerald-400 text-emerald-950" : "bg-emerald-900 border-emerald-700 text-emerald-100 hover:bg-emerald-800"}`}>
+          <span className="flex items-center gap-2 text-sm font-medium"><MapPin className="w-4 h-4" />{t("tagline", { wilaya: commune.name })}</span>
+          <span className={`text-xs font-semibold underline ${wilayaOpen ? "text-emerald-950" : "text-emerald-300"}`}>{t("changeWilaya")}</span>
+        </button>
+
+        <div className="flex gap-1.5 mt-2">
+          {[{ code: "ar", label: "العربية" }, { code: "fr", label: "Français" }, { code: "en", label: "English" }].map((l) => (
+            <button key={l.code} onClick={() => setLang(l.code)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition ${lang === l.code ? "bg-emerald-400 text-emerald-950" : "bg-emerald-900 text-emerald-300"}`}>
+              {l.label}
+            </button>
+          ))}
+        </div>
+
+        {wilayaOpen && (
+          <div className="mt-3 bg-emerald-950 rounded-2xl p-3 max-h-80 overflow-y-auto border border-emerald-800 space-y-3">
+            <div>
+              <p className="text-xs text-emerald-300 px-1 pb-2">{t("wilayaLabel")}</p>
+              <div className="grid grid-cols-2 gap-1">
+                {WILAYAS.map((w) => (
+                  <button key={w.id} onClick={() => selectWilaya(w)}
+                    className={`text-right text-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-1 transition ${w.id === wilayaId ? "bg-emerald-500 text-emerald-950 font-medium" : w.enabled ? "text-emerald-200 hover:bg-emerald-900" : "text-emerald-600"}`}>
+                    <span className="truncate">{w.name}</span>
+                    {!w.enabled && <span className="text-[9px] flex-shrink-0 opacity-70">{t("comingSoon")}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="pt-3 border-t border-emerald-800">
+              <p className="text-xs text-emerald-300 px-1 pb-2">{t("communeLabel")}</p>
+              <div className="grid grid-cols-2 gap-1">
+                {communesForWilaya.map((c) => (
+                  <button key={c.id} onClick={() => selectCommune(c)}
+                    className={`text-right text-xs px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-1 transition ${c.id === communeId ? "bg-emerald-500 text-emerald-950 font-medium" : c.enabled ? "text-emerald-200 hover:bg-emerald-900" : "text-emerald-600"}`}>
+                    <span className="truncate">{c.label || c.name}</span>
+                    {!c.enabled && <span className="text-[9px] flex-shrink-0 opacity-70">{t("comingSoon")}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-3 flex items-baseline gap-2">
+          <span className="text-3xl font-bold mono text-emerald-400">{openCount}</span>
+          <span className="text-xs text-emerald-200">{t("openStat", { total: list.length })}</span>
+        </div>
+
+        <div className="mt-3 relative">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("searchPlaceholder")}
+            className="w-full bg-emerald-900 placeholder-stone-500 text-emerald-50 rounded-xl pr-10 pl-4 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition" />
+        </div>
+
+        <div className="flex gap-2 mt-2 flex-wrap">
+          <button onClick={() => setFilter("all")} className={`px-3 py-1 rounded-full text-xs font-medium transition ${filter === "all" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-200"}`}>{t("filterAll")}</button>
+          <button onClick={() => setFilter("urgent")} className={`px-3 py-1 rounded-full text-xs font-bold transition ${filter === "urgent" ? "bg-rose-500 text-white" : "bg-rose-950 text-rose-300"}`}>{t("filterUrgent")}</button>
+          <button onClick={() => setFilter("open")} className={`px-3 py-1 rounded-full text-xs font-medium transition ${filter === "open" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-200"}`}>{t("filterOpen")}</button>
+          <button onClick={() => setFilter("favorites")} className={`px-3 py-1 rounded-full text-xs font-medium transition flex items-center gap-1 ${filter === "favorites" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-200"}`}>
+            <Heart className="w-3 h-3" fill={filter === "favorites" ? "currentColor" : "none"} />{t("filterFavorites")}
+          </button>
+          {reviewCount > 0 && (
+            <button onClick={() => setShowReview((s) => !s)} className={`px-2.5 py-1 rounded-full text-xs font-medium transition flex items-center gap-1 ${showReview ? "bg-rose-500 text-white" : "bg-emerald-900 text-rose-300"}`}>
+              <AlertTriangle className="w-3 h-3" />{t("reviewBtn", { n: reviewCount })}
+            </button>
+          )}
+          <button onClick={() => setShowAddForm(true)} className="mr-auto px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-400 text-emerald-950 flex items-center gap-1">
+            + {t("addPharmacyBtn")}
+          </button>
+        </div>
+      </header>
+
+      {toast && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-emerald-950 text-emerald-50 text-sm px-4 py-2.5 rounded-full shadow-lg max-w-[90%] text-center">{toast}</div>}
+
+      <main className="px-5 py-5 space-y-3 max-w-md mx-auto">
+        {list.length === 0 && <p className="text-center text-stone-500 mt-10">{filter === "favorites" ? t("noFavorites") : t("noResults")}</p>}
+        {list.map((ph) => (
+          <div key={ph.id} className={`w-full bg-white rounded-2xl p-4 shadow-sm border transition ${ph.underReview ? "border-rose-300 bg-rose-50" : "border-stone-200 hover:shadow-md"}`}>
+            {ph.underReview && (
+              <div className="flex items-center gap-1.5 text-xs font-medium text-rose-500 mb-2 bg-rose-50 rounded-lg px-2.5 py-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />{t("underReviewBanner", { n: ph.complaintCount })}
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <button onClick={() => setSelected(ph)} className="flex-1 min-w-0 text-right flex items-center gap-3">
+                <div className={`relative w-3 h-3 rounded-full pulse-dot flex-shrink-0 ${ph.status.open ? "text-emerald-500 bg-emerald-500" : "text-rose-500 bg-rose-500"}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-stone-900 truncate flex items-center gap-1.5">
+                      {ph.name}
+                      {ph.verified === false && (
+                        <span className="text-[9px] font-medium bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 flex-shrink-0">{t("unverifiedBadge")}</span>
+                      )}
+                    </h3>
+                    <span className="mono text-xs text-stone-500 flex-shrink-0 mr-2">{ph.distance.toFixed(1)} {lang === "ar" ? "كم" : "km"}</span>
+                  </div>
+                  <p className="text-xs text-stone-500 mt-0.5">{ph.area} · {ph.address}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className={`text-xs font-medium ${ph.status.open ? "text-emerald-700" : "text-rose-500"}`}>
+                      {ph.status.open ? t("openNow") : t("closedNow")} · {statusLabel(ph.status)}
+                    </p>
+                    {ph.avgRating !== null && (
+                      <span className="flex items-center gap-0.5 text-xs text-amber-600 flex-shrink-0 mr-2">
+                        <Star className="w-3 h-3" fill="currentColor" />{ph.avgRating.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+              <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                <button onClick={() => toggleFavorite(ph.id, ph.name)} title={t("filterFavorites")}
+                  className={`p-2 rounded-full transition ${ph.isFavorite ? "text-rose-500" : "text-stone-400 hover:bg-rose-50 hover:text-rose-500"}`}>
+                  <Heart className="w-4 h-4" fill={ph.isFavorite ? "currentColor" : "none"} />
+                </button>
+                <button onClick={() => reportPharmacy(ph.id, ph.name)} title={t("reportTitle")} className="p-2 rounded-full text-stone-400 hover:bg-rose-50 hover:text-rose-500 transition">
+                  <Flag className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </main>
+
+      {selected && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setSelected(null)}>
+          <div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  {selectedLive.name}
+                  {selectedLive.verified === false && (
+                    <span className="text-[10px] font-medium bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{t("unverifiedBadge")}</span>
+                  )}
+                </h2>
+                <p className="text-sm text-stone-500 mt-0.5">{selectedLive.area}</p>
+                {selectedLive.verified === false && (
+                  <p className="text-xs text-amber-600 mt-1">{t("unverifiedNote")}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => toggleFavorite(selectedLive.id, selectedLive.name)} className={selectedLive.isFavorite ? "text-rose-500 p-1" : "text-stone-400 p-1"}>
+                  <Heart className="w-5 h-5" fill={selectedLive.isFavorite ? "currentColor" : "none"} />
+                </button>
+                <button onClick={() => setSelected(null)} className="text-stone-500 p-1"><X className="w-5 h-5" /></button>
+              </div>
+            </div>
+            <div className={`inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-sm font-medium ${selectedLive.status.open ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-500"}`}>
+              <span className={`w-2 h-2 rounded-full ${selectedLive.status.open ? "bg-emerald-500" : "bg-rose-500"}`} />
+              {selectedLive.status.open ? t("openNow") : t("closedNowFull")}
+            </div>
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="flex items-center gap-2 text-stone-900"><MapPin className="w-4 h-4 text-stone-500" />{selectedLive.address}</div>
+              <div className="flex items-center gap-2 text-stone-900 mono"><Navigation className="w-4 h-4 text-stone-500" />{selectedLive.distance.toFixed(1)} {lang === "ar" ? "كم عنك" : "km away"}</div>
+              <div className="flex items-center gap-2 text-stone-900"><Clock className="w-4 h-4 text-stone-500" />{statusLabel(selectedLive.status)}</div>
+              {selectedLive.phone && <div className="flex items-center gap-2 text-stone-900 mono"><Phone className="w-4 h-4 text-stone-500" /><span dir="ltr">{selectedLive.phone}</span></div>}
+            </div>
+            {selectedLive.underReview && (
+              <div className="flex items-start gap-2 text-xs text-rose-500 mt-4 bg-rose-50 rounded-lg px-3 py-2.5">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />{t("underReviewDetail", { n: selectedLive.complaintCount })}
+              </div>
+            )}
+
+            <div className="mt-5 pt-4 border-t border-stone-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-stone-900">{t("reviewsTitle")}</h3>
+                {selectedLive.avgRating !== null ? (
+                  <span className="flex items-center gap-1 text-sm text-amber-600">
+                    <Star className="w-4 h-4" fill="currentColor" />{selectedLive.avgRating.toFixed(1)}
+                    <span className="text-stone-400 text-xs">{t("ratingsCount", { n: selectedLive.ratingCount })}</span>
+                  </span>
+                ) : <span className="text-xs text-stone-400">{t("noRatingsYet")}</span>}
+              </div>
+              <p className="text-xs text-stone-500 mt-3 mb-1.5">{t("yourRating")}</p>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} onClick={() => setDraftStars(n)} className="p-0.5">
+                    <Star className={`w-6 h-6 ${n <= draftStars ? "text-amber-500" : "text-stone-200"}`} fill={n <= draftStars ? "currentColor" : "none"} />
+                  </button>
+                ))}
+              </div>
+              <textarea value={draftText} onChange={(e) => setDraftText(e.target.value)} placeholder={t("reviewPlaceholder")} rows={2}
+                className="w-full mt-2 text-sm bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500 transition resize-none" />
+              <button onClick={() => submitRating(selectedLive.id)} className="mt-2 w-full bg-emerald-700 text-emerald-50 rounded-xl py-2 text-sm font-medium">{t("submitReview")}</button>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${selectedLive.lat},${selectedLive.lng}`} target="_blank" rel="noopener noreferrer"
+                className="flex-1 bg-emerald-950 text-emerald-50 rounded-xl py-3 font-medium text-center">{t("directions")}</a>
+              <button onClick={() => reportPharmacy(selectedLive.id, selectedLive.name)} className="px-4 rounded-xl border border-stone-200 text-rose-500 flex items-center justify-center" title={t("reportTitle")}>
+                <Flag className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => !submitting && setShowAddForm(false)}>
+          <div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-bold">{t("addPharmacyTitle")}</h2>
+                <p className="text-sm text-stone-500 mt-0.5">{t("addPharmacySubtitle")}</p>
+              </div>
+              <button onClick={() => !submitting && setShowAddForm(false)} className="text-stone-500 p-1"><X className="w-5 h-5" /></button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">{t("formName")}</label>
+                <input value={formName} onChange={(e) => setFormName(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">{t("communeLabel")}</label>
+                <select value={formCommune || ""} onChange={(e) => setFormCommune(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
+                  {(COMMUNES_BY_WILAYA[wilaya.name] || []).map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">{t("formArea")}</label>
+                <input value={formArea} onChange={(e) => setFormArea(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">{t("formAddress")}</label>
+                <input value={formAddress} onChange={(e) => setFormAddress(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="text-xs text-stone-500 mb-1 block">{t("formPhone")}</label>
+                <input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} dir="ltr"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-stone-700 py-1">
+                <input type="checkbox" checked={formOnDuty} onChange={(e) => setFormOnDuty(e.target.checked)} className="w-4 h-4 accent-emerald-600" />
+                {t("formOnDuty")}
+              </label>
+
+              {!formOnDuty && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-stone-500 mb-1 block">{t("formOpenHour")}</label>
+                    <input type="number" min="0" max="24" step="0.5" value={formOpen} onChange={(e) => setFormOpen(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-stone-500 mb-1 block">{t("formCloseHour")}</label>
+                    <input type="number" min="0" max="30" step="0.5" value={formClose} onChange={(e) => setFormClose(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+                  </div>
+                </div>
+              )}
+
+              <button onClick={captureFormLocation} type="button"
+                className="w-full flex items-center justify-center gap-2 border border-stone-200 rounded-xl py-2.5 text-sm font-medium text-stone-700">
+                <Navigation className="w-4 h-4" />
+                {formLocStatus === "ok" ? t("locationCaptured") : t("useMyLocation")}
+              </button>
+              {formLocStatus === "failed" && <p className="text-xs text-rose-500">{t("locationFailed")}</p>}
+
+              <button onClick={submitNewPharmacy} disabled={submitting}
+                className="w-full bg-emerald-700 disabled:opacity-60 text-emerald-50 rounded-xl py-3 text-sm font-semibold mt-2">
+                {submitting ? t("submittingPharmacy") : t("submitNewPharmacy")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLogin && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setShowLogin(false)}>
+          <div className="bg-white w-full rounded-t-3xl p-6 max-w-md mx-auto sheet-anim" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
+              <h2 className="text-xl font-bold">{t("adminLoginTitle")}</h2>
+              <button onClick={() => setShowLogin(false)} className="text-stone-500 p-1"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="mt-4 space-y-3">
+              <input value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} dir="ltr" placeholder="admin@email.com"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} type="password" dir="ltr" placeholder="••••••••"
+                onKeyDown={(e) => e.key === "Enter" && submitLogin()}
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" />
+              {loginError && <p className="text-xs text-rose-500">{loginError}</p>}
+              <button onClick={submitLogin} disabled={loginLoading}
+                className="w-full bg-emerald-700 disabled:opacity-60 text-emerald-50 rounded-xl py-3 text-sm font-semibold">
+                {loginLoading ? "..." : t("loginBtn")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {adminView && (
+        <div className="fixed inset-0 bg-emerald-950 z-40 overflow-y-auto">
+          <div className="max-w-md mx-auto px-5 py-6">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-xl font-bold text-emerald-50">{t("adminTitle")}</h2>
+              <div className="flex items-center gap-2">
+                <button onClick={logoutAdmin} className="text-xs text-rose-300 border border-rose-900 rounded-md px-2 py-1">{t("logoutBtn")}</button>
+                <button onClick={() => setAdminView(false)} className="text-emerald-400 p-1"><X className="w-5 h-5" /></button>
+              </div>
+            </div>
+            <p className="text-xs text-emerald-500 mb-4 mono" dir="ltr">{adminUser && adminUser.email}</p>
+
+            <div className="flex gap-2 mb-5">
+              <button onClick={() => setAdminTab("review")}
+                className={`flex-1 text-xs font-medium rounded-lg py-2 ${adminTab === "review" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-300"}`}>
+                {t("reviewBtn", { n: reviewQueue.length })}
+              </button>
+              <button onClick={() => setAdminTab("all")}
+                className={`flex-1 text-xs font-medium rounded-lg py-2 ${adminTab === "all" ? "bg-emerald-500 text-emerald-950" : "bg-emerald-900 text-emerald-300"}`}>
+                {t("allPharmaciesTab", { n: allComputed.length })}
+              </button>
+            </div>
+
+            {adminTab === "review" && (
+              <>
+                <p className="text-sm text-emerald-300 mb-4">{t("adminSubtitle", { n: COMPLAINT_THRESHOLD })}</p>
+                {reviewQueue.length === 0 && <div className="text-center text-emerald-600 mt-16 text-sm">{t("adminEmpty")}</div>}
+                <div className="space-y-3">
+                  {reviewQueue.map((ph) => (
+                    <div key={ph.id} className="bg-emerald-950 rounded-2xl p-4 border border-emerald-800">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-emerald-50">{ph.name}</h3>
+                          <p className="text-xs text-emerald-300 mt-0.5">{ph.area} · {ph.address}</p>
+                          {ph.phone && <p className="text-xs text-emerald-300 mt-0.5 mono" dir="ltr">{ph.phone}</p>}
+                        </div>
+                        <div className="flex items-center gap-1 bg-rose-950 text-rose-300 text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0">
+                          <AlertTriangle className="w-3 h-3" />{ph.complaintCount}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <button onClick={() => dismissComplaints(ph.id, ph.name)} className="flex-1 bg-emerald-900 text-emerald-400 text-sm font-medium rounded-lg py-2.5">{t("verifyReturn")}</button>
+                        <button onClick={() => removePermanently(ph.id, ph.name)} className="flex-1 bg-rose-950 text-rose-300 text-sm font-medium rounded-lg py-2.5">{t("deleteFinal")}</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {adminTab === "all" && (
+              <>
+                <p className="text-sm text-emerald-300 mb-4">{t("allPharmaciesSubtitle")}</p>
+                <div className="space-y-2">
+                  {allComputed.map((ph) => (
+                    <div key={ph.id} className="bg-emerald-950 rounded-xl p-3 border border-emerald-800 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-emerald-50 truncate flex items-center gap-1.5">
+                          {ph.name}
+                          {ph.verified === false && <span className="text-[9px] bg-amber-900 text-amber-300 rounded-full px-1.5 py-0.5 flex-shrink-0">{t("unverifiedBadge")}</span>}
+                        </p>
+                        <p className="text-xs text-emerald-400 truncate">{ph.area}</p>
+                      </div>
+                      <button onClick={() => removePermanently(ph.id, ph.name)} className="flex-shrink-0 bg-rose-950 text-rose-300 text-xs font-medium rounded-lg px-3 py-2">{t("deleteFinal")}</button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<PharmacyFinder />);
+document.getElementById("root").dataset.mounted = "true";
+</script>
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("service-worker.js").catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
