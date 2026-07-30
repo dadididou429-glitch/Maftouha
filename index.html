@@ -1099,7 +1099,10 @@ useEffect(() => {
           </button>
         </div>
       </header>
+{toast && ...}
 
+<main className="px-5 py-5 space-y-3 max-w-md mx-auto">
+  {list.length === 0 && ...
       {toast && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-emerald-950 text-emerald-50 text-sm px-4 py-2.5 rounded-full shadow-lg max-w-[90%] text-center">{toast}</div>}
 
         {list.length === 0 && <p className="text-center text-stone-500 mt-10">{filter === "favorites" ? t("noFavorites") : t("noResults")}</p>}
@@ -1388,11 +1391,17 @@ useEffect(() => {
                         <p className="text-xs text-emerald-400 truncate">{ph.area}</p>
                       </div>
                       <button onClick={() => removePermanently(ph.id, ph.name)} className="flex-shrink-0 bg-rose-950 text-rose-300 text-xs font-medium rounded-lg px-3 py-2">{t("deleteFinal")}</button>
-                                          </div>
-              </div>
+                     </div>
+                  ))}
+                </div>
+              </>
             )}
+          </div>
+        </div>
+      )}
     </div>
-  )}
+  );
+}
 ReactDOM.createRoot(document.getElementById("root")).render(<PharmacyFinder />);
 document.getElementById("root").dataset.mounted = "true";
 </script>
