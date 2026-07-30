@@ -1458,16 +1458,11 @@ useEffect(() => {
                         <p className="text-xs text-emerald-400 truncate">{ph.area}</p>
                       </div>
                       <button onClick={() => removePermanently(ph.id, ph.name)} className="flex-shrink-0 bg-rose-950 text-rose-300 text-xs font-medium rounded-lg px-3 py-2">{t("deleteFinal")}</button>
-                    </div>
-                  ))}
-                </div>
-              </>
+                                          </div>
+              </div>
             )}
-          </div>
-        </div>
-      )}
-      
     </div>
+  )}
 ReactDOM.createRoot(document.getElementById("root")).render(<PharmacyFinder />);
 document.getElementById("root").dataset.mounted = "true";
 </script>
