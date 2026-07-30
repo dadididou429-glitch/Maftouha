@@ -359,8 +359,7 @@ const ORAN_PHARMACIES = [
   { id: 260, name: "صيدلية ديتوش", area: "حي ديتوش", address: "Cité Detouche, Oran", phone: null, lat: 35.7150, lng: -0.6500, hours: { open: 8.5, close: 21 }, onDuty: false },
 ].map((p) => ({ ...p, wilaya: "وهران", commune: ORAN_COMMUNE_MAP[p.id] || "وهران", verified: true }));
 
-
-  const ALGER_PHARMACIES = [
+const ALGER_PHARMACIES = [
   { id: 401, name: "صيدلية خلدون 24/7", area: "الحراش", address: "12 Rue Si Hanafi, El-Harrach 16004", phone: "020 43 43 34", lat: 36.7172244, lng: 3.1461069, hours: { open: 0, close: 24 }, onDuty: true },
   { id: 402, name: "صيدلية الزيتونة", area: "بئر مراد رايس", address: "Bir Mourad Raïs 16000", phone: "0560 28 51 99", lat: 36.7341897, lng: 3.0359469, hours: { open: 0, close: 24 }, onDuty: true },
   { id: 403, name: "صيدلية ميمونة", area: "الجزائر الوسطى", address: "115 Rue Didouche Mourad, Alger Centre", phone: "0784 23 03 37", lat: 36.763382, lng: 3.0482317, hours: { open: 7.5, close: 19.5 }, onDuty: false },
