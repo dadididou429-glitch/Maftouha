@@ -303,6 +303,7 @@ const ORAN_PHARMACIES = [
   { id: 159, name: "صيدلية مرافال", area: "حي مرافال", address: "Cité Maraval, Oran", phone: "0690 11 22 33", lat: 35.7100, lng: -0.6550, hours: { open: 8, close: 22.5 }, onDuty: false },
   { id: 160, name: "صيدلية ديتوش", area: "حي ديتوش", address: "Cité Detouche, Oran", phone: null, lat: 35.7150, lng: -0.6500, hours: { open: 8.5, close: 21 }, onDuty: false },
 ].map((p) => ({ ...p, wilaya: "وهران", commune: ORAN_COMMUNE_MAP[p.id] || "وهران", verified: true }));
+ 
   const ALGER_PHARMACIES = [
   { id: 201, name: "صيدلية خلدون 24/7", area: "الحراش", address: "12 Rue Si Hanafi, El-Harrach 16004", phone: "020 43 43 34", lat: 36.7172244, lng: 3.1461069, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
   { id: 202, name: "صيدلية الزيتونة", area: "بئر مراد رايس", address: "Bir Mourad Raïs 16000", phone: "0560 28 51 99", lat: 36.7341897, lng: 3.0359469, hours: { open: 0, close: 24 }, onDuty: true, complaints: 0, ratingSum: 0, ratingCount: 0 },
