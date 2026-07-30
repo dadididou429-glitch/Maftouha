@@ -1133,6 +1133,25 @@ useEffect(() => {
 
       {toast && <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-emerald-950 text-emerald-50 text-sm px-4 py-2.5 rounded-full shadow-lg max-w-[90%] text-center">{toast}</div>}
 
+<div className="flex gap-1 px-5 pt-3 max-w-md mx-auto">
+  <button onClick={() => { setShowMap(false); setActiveTab('list'); }}
+    className={`flex-1 py-2 rounded-xl text-sm font-medium transition ${activeTab === 'list' ? 'tab-active' : 'tab-inactive'}`}>
+    📋 {lang === 'ar' ? 'القائمة' : lang === 'fr' ? 'Liste' : 'List'}
+  </button>
+  <button onClick={() => { setShowMap(true); setActiveTab('map'); }}
+    className={`flex-1 py-2 rounded-xl text-sm font-medium transition ${activeTab === 'map' ? 'tab-active' : 'tab-inactive'}`}>
+    🗺️ {lang === 'ar' ? 'الخريطة' : lang === 'fr' ? 'Carte' : 'Map'}
+  </button>
+</div>
+
+{activeTab === 'map' ? (
+  <div className="px-5 py-3 max-w-md mx-auto">
+    <div id="map" style={{ height: 'calc(100vh - 380px)', minHeight: '400px' }} className="rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-lg"></div>
+    <p className="text-xs text-center text-stone-500 mt-2">
+      {lang === 'ar' ? '🟢 مفتوحة | 🔴 مغلقة | 🟡 مناوبة' : lang === 'fr' ? '🟢 Ouverte | 🔴 Fermée | 🟡 Garde' : '🟢 Open | 🔴 Closed | 🟡 On Duty'}
+    </p>
+  </div>
+) : (
       <div className="flex gap-1 px-5 pt-3 max-w-md mx-auto">
   <button onClick={() => { setShowMap(false); setActiveTab('list'); }}
     className={`flex-1 py-2 rounded-xl text-sm font-medium transition ${activeTab === 'list' ? 'tab-active' : 'tab-inactive'}`}>
