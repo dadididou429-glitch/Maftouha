@@ -1218,7 +1218,7 @@ useEffect(() => {
             </div>
           </div>
         ))}
-      
+      </main>
 
       {selected && (
         <div className="fixed inset-0 bg-black/40 flex items-end z-30" onClick={() => setSelected(null)}>
@@ -1466,12 +1466,8 @@ useEffect(() => {
           </div>
         </div>
       )}
-            </main>
-)}
+      
     </div>
-  );
-}
-
 ReactDOM.createRoot(document.getElementById("root")).render(<PharmacyFinder />);
 document.getElementById("root").dataset.mounted = "true";
 </script>
