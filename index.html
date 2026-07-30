@@ -413,4 +413,102 @@ function haversine(lat1, lng1, lat2, lng2) {
 }
 
 const DEFAULT_LOC = { lat: 35.1917, lng: -0.6355 };
-const COMPLAINT_THRESHOLD = 3;
+const COMPLAINT_THRESHOLD = 3;function PharmacyFinder() {
+  const now = useNow();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [selected, setSelected] = useState(null);
+  const [complaints, setComplaints] = useState(() => Object.fromEntries(RAW_PHARMACIES.map((p) => [p.id, p.complaints])));
+  const [reportedByMe, setReportedByMe] = useState(() => new Set());
+  const [showReview, setShowReview] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [adminView, setAdminView] = useState(false);
+  const [removedIds, setRemovedIds] = useState(() => new Set());
+  const [lang, setLang] = useState("ar");
+  const [wilayaId, setWilayaId] = useState(22);
+  const [communeId, setCommuneId] = useState(0);
+  const [wilayaOpen, setWilayaOpen] = useState(false);
+  const [favorites, setFavorites] = useState(() => new Set());
+  const [ratings, setRatings] = useState(() => Object.fromEntries(RAW_PHARMACIES.map((p) => [p.id, { sum: p.ratingSum, count: p.ratingCount }])));
+  const [myReviews, setMyReviews] = useState({});
+  const [draftStars, setDraftStars] = useState(0);
+  const [draftText, setDraftText] = useState("");
+  const [userLoc, setUserLoc] = useState(DEFAULT_LOC);
+  const [submittedPharmacies, setSubmittedPharmacies] = useState([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formArea, setFormArea] = useState("");
+  const [formAddress, setFormAddress] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formOpen, setFormOpen] = useState(8);
+  const [formClose, setFormClose] = useState(21);
+  const [formOnDuty, setFormOnDuty] = useState(false);
+  const [formLoc, setFormLoc] = useState(null);
+  const [formLocStatus, setFormLocStatus] = useState(null);
+  const [formCommune, setFormCommune] = useState(null);
+  const [adminUser, setAdminUser] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [adminTab, setAdminTab] = useState("review");
+  const dir = lang === "ar" ? "rtl" : "ltr";
+
+  const wilaya = WILAYAS.find((w) => w.id === wilayaId);
+  const t = (key, vars) => tr(lang, key, vars);
+
+  const communesForWilayaRaw = COMMUNES_BY_WILAYA[wilaya.name] || [];
+  const presentCommunes = useMemo(() => {
+    const all = [...RAW_PHARMACIES, ...submittedPharmacies];
+    return new Set(all.filter((p) => p.wilaya === wilaya.name).map((p) => p.commune));
+  }, [submittedPharmacies, wilaya.name]);
+
+  const communesForWilaya = [
+    { id: 0, name: wilaya.name, label: t("allCommunes"), enabled: true },
+    ...communesForWilayaRaw.map((c) => ({ ...c, enabled: presentCommunes.has(c.name) })),
+  ];
+  const commune = communesForWilaya.find((c) => c.id === communeId) || communesForWilaya[0];
+  const statusLabel = (status) => status.kind === "onDuty" ? t("onDutyLabel") : t(status.kind, { time: fmtHour(status.time) });
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { timeout: 8000 }
+    );
+  }, []);
+
+  useEffect(() => {
+    setCommuneId(0);
+  }, [wilayaId]);
+
+  useEffect(() => {
+    const list = COMMUNES_BY_WILAYA[wilaya.name] || [];
+    setFormCommune((list[0] && list[0].name) || wilaya.name);
+  }, [wilaya.name]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!db) return;
+    db.collection("pharmacies_submitted").where("wilaya", "==", wilaya.name).get()
+      .then((snap) => {
+        if (cancelled) return;
+        const rows = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setSubmittedPharmacies(rows);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [wilaya.name]);
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((user) => setAdminUser(user));
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    db.collection("removed_pharmacies").get()
+      .then((snap) 
