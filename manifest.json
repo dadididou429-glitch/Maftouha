@@ -1,16 +1,17 @@
 {
-  "name": "Pharis - صيدليات مفتوحة",
+  "name": "Pharis \u2014 صيدليات سيدي بلعباس",
   "short_name": "Pharis",
   "description": "اعرف أي صيدلية مفتوحة الآن بالقرب منك",
-  "start_url": "/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#022c22",
   "theme_color": "#022c22",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "ar",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
